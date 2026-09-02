@@ -5,7 +5,7 @@ import { buildRowLookup, parseDate, parseIntOrNull, parseNumber } from "./parser
 import { readSheetTab } from "./sheets-client";
 
 export async function syncOrders() {
-  const { rows } = await readSheetTab(SHEET_TABS.orders);
+  const { rows } = await readSheetTab(SHEET_TABS.orders, "situacao");
 
   let processed = 0;
   let skipped = 0;

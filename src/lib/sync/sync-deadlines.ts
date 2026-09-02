@@ -5,7 +5,7 @@ import { buildRowLookup, parseIntOrNull } from "./parsers";
 import { readSheetTab } from "./sheets-client";
 
 export async function syncDeadlines() {
-  const { rows } = await readSheetTab(SHEET_TABS.deadlines);
+  const { rows } = await readSheetTab(SHEET_TABS.deadlines, "canal");
 
   let processed = 0;
   let skipped = 0;

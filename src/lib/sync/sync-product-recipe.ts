@@ -33,7 +33,7 @@ export function extractFilamentPairs(headers: string[]): number[] {
 }
 
 export async function syncProductRecipe() {
-  const { headers, rows } = await readSheetTab(SHEET_TABS.productRecipe);
+  const { headers, rows } = await readSheetTab(SHEET_TABS.productRecipe, "sku");
   const orders = extractFilamentPairs(headers);
 
   let processed = 0;

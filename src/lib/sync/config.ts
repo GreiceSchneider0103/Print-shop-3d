@@ -1,16 +1,11 @@
 /**
  * Nomes das abas da planilha "Controle Financeiro 3D" e variáveis de
- * ambiente do job de sincronização.
- *
- * `orders` e `products` foram confirmados lendo a planilha real (o texto
- * de apoio da aba "Análise por Pedido" referencia as abas de origem
- * literalmente como 'Vendas' e 'Custos'). As demais seguem o nome
- * documentado no escopo original — ajuste aqui (ou via variável de
- * ambiente) se o nome real divergir.
+ * ambiente do job de sincronização. Confirmados direto via
+ * `spreadsheets.get` na planilha real (não são só suposição do escopo).
  */
 export const SHEET_TABS = {
   orders: process.env.SHEET_TAB_ORDERS || "Vendas",
-  products: process.env.SHEET_TAB_PRODUCTS || "Custos",
+  products: process.env.SHEET_TAB_PRODUCTS || "CMV",
   productRecipe: process.env.SHEET_TAB_RECIPE || "Ficha Técnica",
   channelFees: process.env.SHEET_TAB_FEES || "Taxas",
   fixedCosts: process.env.SHEET_TAB_FIXED_COSTS || "Fixos",

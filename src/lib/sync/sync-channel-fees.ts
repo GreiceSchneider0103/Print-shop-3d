@@ -11,7 +11,7 @@ import { readSheetTab } from "./sheets-client";
  * evita duplicar faixas quando os valores de uma faixa existente mudam.
  */
 export async function syncChannelFees() {
-  const { rows } = await readSheetTab(SHEET_TABS.channelFees);
+  const { rows } = await readSheetTab(SHEET_TABS.channelFees, "canal");
 
   const parsed = rows
     .map((row) => {

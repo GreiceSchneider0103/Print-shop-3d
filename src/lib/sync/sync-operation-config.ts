@@ -31,7 +31,7 @@ function matchLabel(label: string, ...keywords: string[]): boolean {
  * recente por `atualizadoEm`.
  */
 export async function syncOperationConfig() {
-  const { rows } = await readSheetTab(SHEET_TABS.operationConfig);
+  const { rows } = await readSheetTab(SHEET_TABS.operationConfig, "parametro");
 
   const data: OperationConfigData = {
     potenciaImpressora: 0,

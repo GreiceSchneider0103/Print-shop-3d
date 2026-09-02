@@ -5,7 +5,7 @@ import { buildRowLookup, parseMonth, parseNumber } from "./parsers";
 import { readSheetTab } from "./sheets-client";
 
 export async function syncFixedCosts() {
-  const { rows } = await readSheetTab(SHEET_TABS.fixedCosts);
+  const { rows } = await readSheetTab(SHEET_TABS.fixedCosts, "mes");
 
   let processed = 0;
   let skipped = 0;

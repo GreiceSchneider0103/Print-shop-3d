@@ -5,7 +5,7 @@ import { buildRowLookup, parseIntOrNull, parseNumber } from "./parsers";
 import { readSheetTab } from "./sheets-client";
 
 export async function syncProducts() {
-  const { rows } = await readSheetTab(SHEET_TABS.products);
+  const { rows } = await readSheetTab(SHEET_TABS.products, "sku");
 
   let processed = 0;
   let skipped = 0;
