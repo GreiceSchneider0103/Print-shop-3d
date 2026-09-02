@@ -1,6 +1,6 @@
 "use client";
 
-import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { formatCurrencyBRL, formatMonth } from "@/lib/format";
 import type { MonthlyPoint } from "@/lib/queries/monthly";
@@ -9,7 +9,7 @@ export function MonthlyChart({ data }: { data: MonthlyPoint[] }) {
   return (
     <div className="h-72 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 8, right: 16, left: 8, bottom: 0 }}>
+        <BarChart data={data} margin={{ top: 8, right: 16, left: 8, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
           <XAxis
             dataKey="month"
@@ -22,10 +22,10 @@ export function MonthlyChart({ data }: { data: MonthlyPoint[] }) {
             labelFormatter={(value) => (typeof value === "string" ? formatMonth(`${value}-01`) : value)}
           />
           <Legend wrapperStyle={{ fontSize: 12 }} />
-          <Line type="monotone" dataKey="faturamento" name="Faturamento" stroke="var(--chart-1)" strokeWidth={2} dot={false} />
-          <Line type="monotone" dataKey="margem" name="Margem" stroke="var(--chart-2)" strokeWidth={2} dot={false} />
-          <Line type="monotone" dataKey="lucroLiquido" name="Lucro líquido" stroke="var(--chart-3)" strokeWidth={2} dot={false} />
-        </LineChart>
+          <Bar dataKey="faturamento" name="Faturamento" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="margem" name="Margem" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="lucroLiquido" name="Lucro líquido" fill="var(--chart-3)" radius={[4, 4, 0, 0]} />
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );

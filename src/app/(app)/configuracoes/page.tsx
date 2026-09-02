@@ -7,7 +7,13 @@ import {
   WalletIcon,
 } from "lucide-react";
 
+import { deleteChannelFee, deleteDeadline, deleteFixedCost } from "@/app/(app)/configuracoes/actions";
 import { ChannelBadge } from "@/components/channel-badge";
+import { AddChannelFeeButton, EditChannelFeeButton } from "@/components/configuracoes/channel-fee-form";
+import { AddDeadlineButton, EditDeadlineButton } from "@/components/configuracoes/deadline-form";
+import { DeleteRowButton } from "@/components/configuracoes/delete-row-button";
+import { AddFixedCostButton, EditFixedCostButton } from "@/components/configuracoes/fixed-cost-form";
+import { EditOperationConfigButton } from "@/components/configuracoes/operation-config-form";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { SyncNowButton } from "@/components/sync-now-button";
@@ -37,7 +43,7 @@ export default async function ConfiguracoesPage() {
       <PageHeader
         icon={SettingsIcon}
         title="Configurações"
-        description="Dados vêm da sincronização com o Google Sheets. Edição manual entra na Fase 3."
+        description="Dados vêm da sincronização com o Google Sheets, mas também podem ser editados aqui."
         actions={<SyncNowButton />}
       />
 
@@ -65,9 +71,12 @@ export default async function ConfiguracoesPage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="taxas">
+        <TabsContent value="taxas" className="flex flex-col gap-4">
+          <div className="flex justify-end">
+            <AddChannelFeeButton />
+          </div>
           {channelFees.length === 0 ? (
-            <EmptyState icon={PercentIcon} message="Nenhuma taxa sincronizada ainda." />
+            <EmptyState icon={PercentIcon} message="Nenhuma taxa cadastrada ainda." />
           ) : (
             <Table>
               <TableHeader>
@@ -77,6 +86,7 @@ export default async function ConfiguracoesPage() {
                   <TableHead>Comissão</TableHead>
                   <TableHead>Taxa fixa</TableHead>
                   <TableHead>Observação</TableHead>
+                  <TableHead className="w-20" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -93,6 +103,15 @@ export default async function ConfiguracoesPage() {
                     <TableCell className="text-muted-foreground max-w-xs truncate">
                       {fee.observacao ?? "—"}
                     </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-1">
+                        <EditChannelFeeButton fee={fee} />
+                        <DeleteRowButton
+                          action={deleteChannelFee.bind(null, fee.id)}
+                          confirmMessage={`Excluir a faixa de ${fee.canal}?`}
+                        />
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -100,9 +119,12 @@ export default async function ConfiguracoesPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="fixos">
+        <TabsContent value="fixos" className="flex flex-col gap-4">
+          <div className="flex justify-end">
+            <AddFixedCostButton />
+          </div>
           {fixedCosts.length === 0 ? (
-            <EmptyState icon={WalletIcon} message="Nenhum custo fixo sincronizado ainda." />
+            <EmptyState icon={WalletIcon} message="Nenhum custo fixo cadastrado ainda." />
           ) : (
             <Table>
               <TableHeader>
@@ -115,6 +137,7 @@ export default async function ConfiguracoesPage() {
                   <TableHead>Outros</TableHead>
                   <TableHead>Reembolso</TableHead>
                   <TableHead>Total</TableHead>
+                  <TableHead className="w-20" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -128,6 +151,15 @@ export default async function ConfiguracoesPage() {
                     <TableCell>{formatCurrencyBRL(cost.outros.toString())}</TableCell>
                     <TableCell>{formatCurrencyBRL(cost.reembolso.toString())}</TableCell>
                     <TableCell className="font-medium">{formatCurrencyBRL(cost.total.toString())}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-1">
+                        <EditFixedCostButton cost={cost} />
+                        <DeleteRowButton
+                          action={deleteFixedCost.bind(null, cost.id)}
+                          confirmMessage={`Excluir os custos fixos de ${formatDate(cost.mes)}?`}
+                        />
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -137,8 +169,9 @@ export default async function ConfiguracoesPage() {
 
         <TabsContent value="operacao">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Parâmetros vigentes</CardTitle>
+              <EditOperationConfigButton config={operationConfig} />
             </CardHeader>
             <CardContent>
               {operationConfig ? (
@@ -157,15 +190,18 @@ export default async function ConfiguracoesPage() {
                   <span>{formatDate(operationConfig.atualizadoEm)}</span>
                 </div>
               ) : (
-                <EmptyState icon={SlidersHorizontalIcon} message="Nenhuma configuração sincronizada ainda." />
+                <EmptyState icon={SlidersHorizontalIcon} message="Nenhuma configuração cadastrada ainda." />
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="prazos">
+        <TabsContent value="prazos" className="flex flex-col gap-4">
+          <div className="flex justify-end">
+            <AddDeadlineButton />
+          </div>
           {deadlines.length === 0 ? (
-            <EmptyState icon={ClockIcon} message="Nenhum prazo sincronizado ainda." />
+            <EmptyState icon={ClockIcon} message="Nenhum prazo cadastrado ainda." />
           ) : (
             <Table>
               <TableHeader>
@@ -173,6 +209,7 @@ export default async function ConfiguracoesPage() {
                   <TableHead>Canal</TableHead>
                   <TableHead>Prazo (dias úteis)</TableHead>
                   <TableHead>Observação</TableHead>
+                  <TableHead className="w-20" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -183,6 +220,15 @@ export default async function ConfiguracoesPage() {
                     </TableCell>
                     <TableCell>{d.diasUteisPrazo}</TableCell>
                     <TableCell className="text-muted-foreground max-w-md truncate">{d.observacao ?? "—"}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-1">
+                        <EditDeadlineButton deadline={d} />
+                        <DeleteRowButton
+                          action={deleteDeadline.bind(null, d.id)}
+                          confirmMessage={`Excluir o prazo de ${d.canal}?`}
+                        />
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

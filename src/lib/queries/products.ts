@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { computeOrderMargin } from "@/lib/finance";
+import type { DateRange } from "@/lib/period";
 
 export type ProductAnalysis = {
   sku: string;
@@ -12,9 +13,14 @@ export type ProductAnalysis = {
   classe: "A" | "B" | "C";
 };
 
-/** Curva ABC: os SKUs que juntos respondem por 80% da margem são classe A. */
-export async function getProductAnalysis(): Promise<ProductAnalysis[]> {
-  const orders = await db.order.findMany();
+/**
+ * Curva ABC: os SKUs que juntos respondem por 80% da margem são classe A.
+ * Sem `range`, considera o histórico completo.
+ */
+export async function getProductAnalysis(range?: DateRange): Promise<ProductAnalysis[]> {
+  const orders = await db.order.findMany(
+    range ? { where: { dataVenda: { gte: range.from, lte: range.to } } } : undefined,
+  );
   const products = await db.product.findMany();
   const productBySku = new Map(products.map((p) => [p.sku, p]));
 
