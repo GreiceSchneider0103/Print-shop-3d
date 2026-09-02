@@ -1,0 +1,88 @@
+import { db } from "@/lib/db";
+import { SyncStatus } from "@prisma/client";
+
+import { SHEET_TABS } from "./config";
+import { syncChannelFees } from "./sync-channel-fees";
+import { syncDeadlines } from "./sync-deadlines";
+import { syncFixedCosts } from "./sync-fixed-costs";
+import { syncOperationConfig } from "./sync-operation-config";
+import { syncOrders } from "./sync-orders";
+import { syncProductRecipe } from "./sync-product-recipe";
+import { syncProducts } from "./sync-products";
+
+type SyncResult = { processed: number; skipped: number; total: number };
+
+type SyncStep = {
+  tab: string;
+  run: () => Promise<SyncResult>;
+};
+
+// Ordem importa: products antes de product_recipe (FK), e orders pode ser
+// independente. As demais são tabelas de configuração simples.
+const STEPS: SyncStep[] = [
+  { tab: SHEET_TABS.products, run: syncProducts },
+  { tab: SHEET_TABS.productRecipe, run: syncProductRecipe },
+  { tab: SHEET_TABS.orders, run: syncOrders },
+  { tab: SHEET_TABS.channelFees, run: syncChannelFees },
+  { tab: SHEET_TABS.fixedCosts, run: syncFixedCosts },
+  { tab: SHEET_TABS.operationConfig, run: syncOperationConfig },
+  { tab: SHEET_TABS.deadlines, run: syncDeadlines },
+];
+
+export type SyncSummary = {
+  tab: string;
+  status: SyncStatus;
+  processed: number;
+  skipped: number;
+  total: number;
+  error?: string;
+};
+
+export async function runFullSync(): Promise<SyncSummary[]> {
+  const summaries: SyncSummary[] = [];
+
+  for (const step of STEPS) {
+    const startedAt = new Date();
+
+    try {
+      const result = await step.run();
+      const status = result.skipped > 0 ? SyncStatus.PARTIAL : SyncStatus.SUCCESS;
+
+      await db.syncLog.create({
+        data: {
+          sheetTab: step.tab,
+          status,
+          recordsProcessed: result.processed,
+          startedAt,
+          finishedAt: new Date(),
+        },
+      });
+
+      summaries.push({ tab: step.tab, status, ...result });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+
+      await db.syncLog.create({
+        data: {
+          sheetTab: step.tab,
+          status: SyncStatus.ERROR,
+          recordsProcessed: 0,
+          errorMessage: message,
+          startedAt,
+          finishedAt: new Date(),
+        },
+      });
+
+      summaries.push({
+        tab: step.tab,
+        status: SyncStatus.ERROR,
+        processed: 0,
+        skipped: 0,
+        total: 0,
+        error: message,
+      });
+    }
+  }
+
+  return summaries;
+}
