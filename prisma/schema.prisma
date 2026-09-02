@@ -154,6 +154,8 @@ model ProductionQueueItem {
   prazoPostagem DateTime?        @map("prazo_postagem")
   canal         String
   status        ProductionStatus @default(A_PRODUZIR)
+  // Evita baixar o estoque mais de uma vez se o item voltar pra PRODUZIDO.
+  estoqueBaixado Boolean         @default(false) @map("estoque_baixado")
   criadoEm      DateTime         @default(now()) @map("criado_em")
   atualizadoEm  DateTime         @updatedAt @map("atualizado_em")
 
