@@ -16,6 +16,13 @@ export function normalizeHeader(header: string): string {
  * Constrói um lookup normalizado -> valor a partir de uma linha da
  * planilha, para permitir buscar colunas por uma lista de aliases
  * tolerante a variação de nome.
+ *
+ * Cabeçalhos reais costumam ter texto explicativo colado ao nome do campo
+ * ("Custo unitário (CMV)", "Gramas 1 (por unidade)", "Frete pago pelo
+ * cliente"). Por isso, quando não há match exato, cai para "contém" nos
+ * dois sentidos (alias dentro do cabeçalho, ou cabeçalho dentro do alias)
+ * — cobre a maioria das variações sem precisar hardcodar o texto completo
+ * de cada cabeçalho.
  */
 export function buildRowLookup(row: Record<string, string>) {
   const lookup = new Map<string, string>();
@@ -26,9 +33,23 @@ export function buildRowLookup(row: Record<string, string>) {
   return {
     get(...aliases: string[]): string | undefined {
       for (const alias of aliases) {
-        const value = lookup.get(normalizeHeader(alias));
+        const normalizedAlias = normalizeHeader(alias);
+        const value = lookup.get(normalizedAlias);
         if (value !== undefined && value !== "") return value;
       }
+
+      for (const alias of aliases) {
+        const normalizedAlias = normalizeHeader(alias);
+        if (!normalizedAlias) continue;
+        for (const [key, value] of lookup) {
+          // Cabeçalho em branco normaliza para "", que é substring de
+          // qualquer alias — sem este skip, uma coluna sem título (comuns
+          // em planilhas com colunas auxiliares) "casaria" com tudo.
+          if (!key || value === "") continue;
+          if (key.includes(normalizedAlias) || normalizedAlias.includes(key)) return value;
+        }
+      }
+
       return undefined;
     },
     raw: lookup,
@@ -100,7 +121,17 @@ export function parseDate(value: string | undefined | null): Date | null {
   return null;
 }
 
-/** Aceita "01/2024", "2024-01" ou "Janeiro/2024" e normaliza para dia 1. */
+const MESES_ABREV = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const MESES_COMPLETOS = [
+  "janeiro", "fevereiro", "marco", "abril", "maio", "junho",
+  "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+];
+
+/**
+ * Aceita "01/2024", "2024-01", "Janeiro/2024" e também "jul./26" (mês
+ * abreviado + ano com 2 dígitos, formato real da aba "Fixos" da planilha).
+ * Normaliza para o dia 1 do mês.
+ */
 export function parseMonth(value: string | undefined | null): Date | null {
   if (!value) return null;
   const trimmed = value.trim();
@@ -117,18 +148,26 @@ export function parseMonth(value: string | undefined | null): Date | null {
     return new Date(Date.UTC(Number(yyyy), Number(mm) - 1, 1));
   }
 
-  const asDate = parseDate(trimmed);
-  if (asDate) return new Date(Date.UTC(asDate.getUTCFullYear(), asDate.getUTCMonth(), 1));
+  // "jul./26", "jul/26", "jul./2026" — mês abreviado em pt-BR + ano de 2 ou 4 dígitos
+  const abrevMatch = /^([a-zà-ú]{3})\.?\/(\d{2,4})$/i.exec(trimmed);
+  if (abrevMatch) {
+    const idx = MESES_ABREV.indexOf(normalizeHeader(abrevMatch[1]));
+    if (idx >= 0) {
+      const anoRaw = Number(abrevMatch[2]);
+      const ano = anoRaw < 100 ? 2000 + anoRaw : anoRaw;
+      return new Date(Date.UTC(ano, idx, 1));
+    }
+  }
 
-  const MESES = [
-    "janeiro", "fevereiro", "marco", "abril", "maio", "junho",
-    "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
-  ];
-  const monthName = /^([a-zÀ-ú]+)\/(\d{4})$/i.exec(trimmed);
+  // "Janeiro/2024" — nome completo do mês + ano de 4 dígitos
+  const monthName = /^([a-zà-ú]+)\/(\d{4})$/i.exec(trimmed);
   if (monthName) {
-    const idx = MESES.indexOf(normalizeHeader(monthName[1]));
+    const idx = MESES_COMPLETOS.indexOf(normalizeHeader(monthName[1]));
     if (idx >= 0) return new Date(Date.UTC(Number(monthName[2]), idx, 1));
   }
+
+  const asDate = parseDate(trimmed);
+  if (asDate) return new Date(Date.UTC(asDate.getUTCFullYear(), asDate.getUTCMonth(), 1));
 
   return null;
 }

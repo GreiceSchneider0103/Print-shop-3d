@@ -19,17 +19,21 @@ export async function syncProducts() {
       continue;
     }
 
+    // Aliases: cabeçalho real confirmado na planilha primeiro, variações
+    // mais curtas como fallback.
     const data = {
       produto: r.get("produto") || "",
-      custoUnitario: parseNumber(r.get("custo_unitario", "custo unitario")) ?? 0,
+      custoUnitario: parseNumber(r.get("custo unitario (cmv)", "custo_unitario", "custo unitario")) ?? 0,
       tempoProducaoMin: parseIntOrNull(
-        r.get("tempo_producao_min", "tempo producao", "tempo de producao (min)"),
+        r.get("tempo de producao (min)", "tempo_producao_min", "tempo producao"),
       ),
-      tipoAnuncioMl: r.get("tipo_anuncio_ml", "tipo anuncio ml") || null,
-      diasPreparoMl: parseIntOrNull(r.get("dias_preparo_ml", "dias preparo ml")),
-      precoMl: parseNumber(r.get("preco_ml")),
-      precoShopee: parseNumber(r.get("preco_shopee")),
-      precoTiktok: parseNumber(r.get("preco_tiktok")),
+      tipoAnuncioMl: r.get("tipo anuncio ml (classico/premium)", "tipo_anuncio_ml", "tipo anuncio ml") || null,
+      diasPreparoMl: parseIntOrNull(
+        r.get("dias de preparo so p sob encomenda", "dias_preparo_ml", "dias preparo ml"),
+      ),
+      precoMl: parseNumber(r.get("mercado livre", "preco_ml")),
+      precoShopee: parseNumber(r.get("shopee", "preco_shopee")),
+      precoTiktok: parseNumber(r.get("tiktok", "preco_tiktok")),
     };
 
     await db.product.upsert({

@@ -15,8 +15,11 @@ export function extractFilamentPairs(headers: string[]): number[] {
   const orders = new Set<number>();
 
   for (const header of headers) {
-    // normalizeHeader já remove espaços/acentos: "Filamento 1" -> "filamento1"
-    const match = /^filamento(\d+)$/.exec(normalizeHeader(header));
+    // normalizeHeader já remove espaços/acentos: "Filamento 1" -> "filamento1",
+    // "Filamento 2 (opcional)" -> "filamento2opcional" — por isso sem "$" no
+    // fim do regex, para não perder a ordem por causa do texto explicativo
+    // colado depois do número.
+    const match = /^filamento(\d+)/.exec(normalizeHeader(header));
     if (match) orders.add(Number(match[1]));
   }
 
