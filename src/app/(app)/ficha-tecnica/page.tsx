@@ -1,8 +1,9 @@
 import { WrenchIcon } from "lucide-react";
 
 import { EmptyState } from "@/components/empty-state";
-import { FichaTecnicaCard, type FichaTecnicaProduct } from "@/components/ficha-tecnica/ficha-tecnica-card";
+import { FichaTecnicaRow, type FichaTecnicaProduct } from "@/components/ficha-tecnica/ficha-tecnica-row";
 import { PageHeader } from "@/components/page-header";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -28,16 +29,30 @@ export default async function FichaTecnicaPage() {
       <PageHeader
         icon={WrenchIcon}
         title="Ficha Técnica"
-        description="Consumo de filamento por SKU — edite direto no card. Cálculo automático de custo unitário entra na Fase 2."
+        description="Consumo de filamento por SKU — edite direto na linha. Cálculo automático de custo unitário entra na Fase 2."
       />
 
       {plainProducts.length === 0 ? (
         <EmptyState icon={WrenchIcon} message="Nenhum produto sincronizado ainda." />
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {plainProducts.map((product) => (
-            <FichaTecnicaCard key={product.sku} product={product} />
-          ))}
+        <div className="overflow-x-auto rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>SKU</TableHead>
+                <TableHead>Produto</TableHead>
+                <TableHead>Filamentos</TableHead>
+                <TableHead>Custo unitário cadastrado</TableHead>
+                <TableHead>Tempo de produção</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {plainProducts.map((product) => (
+                <FichaTecnicaRow key={product.sku} product={product} />
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>
