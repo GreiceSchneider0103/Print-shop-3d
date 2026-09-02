@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { LineChartIcon } from "lucide-react";
 
 import { MonthlyChart } from "@/components/dashboard/monthly-chart";
+import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatCurrencyBRL } from "@/lib/format";
+import { formatCurrencyBRL, formatMonth } from "@/lib/format";
 import { getMonthlySeries } from "@/lib/queries/monthly";
 
 export const dynamic = "force-dynamic";
@@ -13,10 +15,11 @@ export default async function DashboardMensalPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-xl font-semibold">Dashboard Mensal</h1>
-        <p className="text-sm text-muted-foreground">Últimos 12 meses — clique num mês para ver os pedidos</p>
-      </div>
+      <PageHeader
+        icon={LineChartIcon}
+        title="Dashboard Mensal"
+        description="Últimos 12 meses — clique num mês para ver os pedidos"
+      />
 
       <Card>
         <CardHeader>
@@ -46,14 +49,21 @@ export default async function DashboardMensalPage() {
               {series.map((point) => (
                 <TableRow key={point.month}>
                   <TableCell>
-                    <Link href={`/vendas?from=${point.month}-01&to=${point.month}-31`} className="text-primary hover:underline">
-                      {point.month}
+                    <Link
+                      href={`/vendas?from=${point.month}-01&to=${point.month}-31`}
+                      className="text-primary hover:underline"
+                    >
+                      {formatMonth(`${point.month}-01`)}
                     </Link>
                   </TableCell>
                   <TableCell>{formatCurrencyBRL(point.faturamento)}</TableCell>
-                  <TableCell>{formatCurrencyBRL(point.margem)}</TableCell>
+                  <TableCell className={point.margem < 0 ? "text-destructive" : undefined}>
+                    {formatCurrencyBRL(point.margem)}
+                  </TableCell>
                   <TableCell>{formatCurrencyBRL(point.custosFixos)}</TableCell>
-                  <TableCell>{formatCurrencyBRL(point.lucroLiquido)}</TableCell>
+                  <TableCell className={point.lucroLiquido < 0 ? "text-destructive font-medium" : "font-medium"}>
+                    {formatCurrencyBRL(point.lucroLiquido)}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

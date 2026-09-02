@@ -1,8 +1,11 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeftIcon } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
+import { ChannelBadge } from "@/components/channel-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrencyBRL, formatDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { getOrderById } from "@/lib/queries/orders";
 
 export const dynamic = "force-dynamic";
@@ -31,9 +34,16 @@ export default async function OrderDetailPage({
   return (
     <div className="flex max-w-2xl flex-col gap-6">
       <div>
+        <Link
+          href="/vendas"
+          className="text-muted-foreground hover:text-foreground mb-2 inline-flex items-center gap-1 text-sm"
+        >
+          <ArrowLeftIcon className="size-3.5" />
+          Voltar para Vendas
+        </Link>
         <h1 className="text-xl font-semibold">Pedido {order.numeroPedido}</h1>
-        <p className="text-sm text-muted-foreground">
-          {formatDate(order.dataVenda)} · <Badge variant="outline">{order.canal}</Badge>
+        <p className="text-muted-foreground flex items-center gap-2 text-sm">
+          {formatDate(order.dataVenda)} <ChannelBadge canal={order.canal} />
         </p>
       </div>
 
@@ -62,13 +72,22 @@ export default async function OrderDetailPage({
           <CardTitle>Breakdown financeiro</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-2 text-sm">
-          {rows.map(([label, value]) => (
-            <div key={label} className="flex items-center justify-between border-b py-1 last:border-0 last:font-semibold">
-              <span className="text-muted-foreground">{label}</span>
-              <span>{value}</span>
-            </div>
-          ))}
-          <div className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
+          {rows.map(([label, value], index) => {
+            const isLast = index === rows.length - 1;
+            return (
+              <div
+                key={label}
+                className={cn(
+                  "flex items-center justify-between border-b py-1 last:border-0 last:font-semibold",
+                  isLast && margem < 0 && "text-destructive",
+                )}
+              >
+                <span className={cn("text-muted-foreground", isLast && "font-semibold text-inherit")}>{label}</span>
+                <span>{value}</span>
+              </div>
+            );
+          })}
+          <div className="text-muted-foreground flex items-center justify-between pt-1 text-xs">
             <span>Margem %</span>
             <span>{(margemPct * 100).toFixed(1)}%</span>
           </div>
