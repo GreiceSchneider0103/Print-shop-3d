@@ -11,7 +11,7 @@ import { readSheetTab } from "./sheets-client";
  * pares existem a partir do cabeçalho, sem limitar a 2 como a planilha
  * atual — atendendo ao pedido do escopo de "permitir N filamentos".
  */
-function extractFilamentPairs(headers: string[]): number[] {
+export function extractFilamentPairs(headers: string[]): number[] {
   const orders = new Set<number>();
 
   for (const header of headers) {
@@ -50,6 +50,8 @@ export async function syncProductRecipe() {
       continue;
     }
 
+    const ordensPreenchidas: number[] = [];
+
     for (const ordem of orders) {
       const filamentoAliases = [`filamento_${ordem}`, `filamento${ordem}`, ...(ordem === 1 ? ["filamento"] : [])];
       const gramasAliases = [`gramas_${ordem}`, `gramas${ordem}`, ...(ordem === 1 ? ["gramas"] : [])];
@@ -64,8 +66,16 @@ export async function syncProductRecipe() {
         update: { filamento, gramas },
       });
 
+      ordensPreenchidas.push(ordem);
       processed += 1;
     }
+
+    // Remove entradas antigas de ordens que existiam antes mas não vieram
+    // mais nesta sincronização (ex.: peça que usava 2 filamentos passou a
+    // usar só 1) — sem isso a ficha técnica acumula lixo indefinidamente.
+    await db.productRecipe.deleteMany({
+      where: { sku, ordem: { notIn: ordensPreenchidas.length > 0 ? ordensPreenchidas : orders } },
+    });
   }
 
   return { processed, skipped, total: rows.length };

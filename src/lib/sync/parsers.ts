@@ -69,10 +69,17 @@ export function parseIntOrNull(value: string | undefined | null): number | null 
 }
 
 const DATE_PATTERNS = [
-  /^(\d{2})\/(\d{2})\/(\d{4})$/, // dd/mm/aaaa
-  /^(\d{4})-(\d{2})-(\d{2})$/, // aaaa-mm-dd
+  /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/, // d/m/aaaa ou dd/mm/aaaa
+  /^(\d{4})-(\d{1,2})-(\d{1,2})$/, // aaaa-m-d ou aaaa-mm-dd
 ];
 
+/**
+ * Datas vindas do Sheets com `dateTimeRenderOption: FORMATTED_STRING` saem
+ * formatadas conforme o locale da planilha (ex.: "2/9/2026" sem zero à
+ * esquerda). Tratamos explicitamente como dd/mm/aaaa — nunca cai no
+ * `new Date(string)` nativo do JS, que interpretaria como mm/dd/aaaa
+ * (formato americano) e inverteria dia e mês silenciosamente.
+ */
 export function parseDate(value: string | undefined | null): Date | null {
   if (!value) return null;
   const trimmed = value.trim();
@@ -90,8 +97,7 @@ export function parseDate(value: string | undefined | null): Date | null {
     return new Date(Date.UTC(Number(yyyy), Number(mm) - 1, Number(dd)));
   }
 
-  const parsed = new Date(trimmed);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+  return null;
 }
 
 /** Aceita "01/2024", "2024-01" ou "Janeiro/2024" e normaliza para dia 1. */

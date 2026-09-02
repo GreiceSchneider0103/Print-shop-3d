@@ -30,10 +30,14 @@ export async function syncChannelFees() {
     })
     .filter((row): row is NonNullable<typeof row> => row !== null);
 
-  await db.$transaction([
-    db.channelFee.deleteMany({}),
-    ...(parsed.length > 0 ? [db.channelFee.createMany({ data: parsed })] : []),
-  ]);
+  // Nunca apaga a tabela se nada foi lido/parseado com sucesso — isso quase
+  // sempre indica um problema (aba vazia por engano, erro de leitura, nome
+  // de coluna mudou), não uma decisão real de zerar as taxas cadastradas.
+  if (parsed.length === 0) {
+    return { processed: 0, skipped: rows.length, total: rows.length };
+  }
+
+  await db.$transaction([db.channelFee.deleteMany({}), db.channelFee.createMany({ data: parsed })]);
 
   return { processed: parsed.length, skipped: rows.length - parsed.length, total: rows.length };
 }
