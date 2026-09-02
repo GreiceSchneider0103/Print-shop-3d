@@ -10,6 +10,7 @@ import {
 import { ChannelBadge } from "@/components/channel-badge";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
+import { SyncNowButton } from "@/components/sync-now-button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -18,6 +19,9 @@ import { db } from "@/lib/db";
 import { formatCurrencyBRL, formatDate, formatDateTime, formatPercent } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
+// Server Action nesta página chama o sync completo (7 abas) — precisa de
+// mais que o timeout padrão de function na Vercel.
+export const maxDuration = 60;
 
 export default async function ConfiguracoesPage() {
   const [channelFees, fixedCosts, operationConfig, deadlines, syncLogs] = await Promise.all([
@@ -34,6 +38,7 @@ export default async function ConfiguracoesPage() {
         icon={SettingsIcon}
         title="Configurações"
         description="Dados vêm da sincronização com o Google Sheets. Edição manual entra na Fase 3."
+        actions={<SyncNowButton />}
       />
 
       <Tabs defaultValue="taxas">
