@@ -1,8 +1,11 @@
 import { db } from "@/lib/db";
 
+import { mapWithConcurrency } from "./concurrency";
 import { SHEET_TABS } from "./config";
 import { buildRowLookup, normalizeHeader, parseNumber } from "./parsers";
 import { readSheetTab } from "./sheets-client";
+
+const UPSERT_CONCURRENCY = 15;
 
 /**
  * A ficha técnica permite N filamentos por SKU. Na planilha isso é
@@ -36,23 +39,31 @@ export async function syncProductRecipe() {
   const { headers, rows } = await readSheetTab(SHEET_TABS.productRecipe, "sku");
   const orders = extractFilamentPairs(headers);
 
-  let processed = 0;
+  // Busca todos os SKUs existentes de uma vez em vez de checar um por um —
+  // era isso, não a leitura da planilha, que fazia essa aba demorar tanto:
+  // um `findUnique` pra CADA linha (inclusive as em branco) é uma viagem de
+  // rede por linha só pra descobrir que a maioria vai ser ignorada.
+  const existingSkus = new Set((await db.product.findMany({ select: { sku: true } })).map((p) => p.sku));
+
   let skipped = 0;
+  // Chave -> linha: se o mesmo SKU aparecer mais de uma vez, a última linha
+  // vence — e evita duas requisições concorrentes mexendo na ficha técnica
+  // do mesmo SKU ao mesmo tempo.
+  const bySku = new Map<string, ReturnType<typeof buildRowLookup>>();
 
   for (const row of rows) {
     const r = buildRowLookup(row);
     const sku = r.get("sku");
-    if (!sku) {
+    if (!sku || !existingSkus.has(sku)) {
       skipped += 1;
       continue;
     }
+    bySku.set(sku, r);
+  }
 
-    const productExists = await db.product.findUnique({ where: { sku }, select: { sku: true } });
-    if (!productExists) {
-      skipped += 1;
-      continue;
-    }
+  const validRows = Array.from(bySku.entries()).map(([sku, r]) => ({ sku, r }));
 
+  const processedCounts = await mapWithConcurrency(validRows, UPSERT_CONCURRENCY, async ({ sku, r }) => {
     const ordensPreenchidas: number[] = [];
 
     for (const ordem of orders) {
@@ -70,7 +81,6 @@ export async function syncProductRecipe() {
       });
 
       ordensPreenchidas.push(ordem);
-      processed += 1;
     }
 
     // Remove entradas antigas de ordens que existiam antes mas não vieram
@@ -79,7 +89,11 @@ export async function syncProductRecipe() {
     await db.productRecipe.deleteMany({
       where: { sku, ordem: { notIn: ordensPreenchidas.length > 0 ? ordensPreenchidas : orders } },
     });
-  }
+
+    return ordensPreenchidas.length;
+  });
+
+  const processed = processedCounts.reduce((sum, count) => sum + count, 0);
 
   return { processed, skipped, total: rows.length };
 }

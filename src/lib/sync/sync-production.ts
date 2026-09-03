@@ -1,8 +1,11 @@
 import { db } from "@/lib/db";
 
+import { mapWithConcurrency } from "./concurrency";
 import { SHEET_TABS } from "./config";
 import { buildRowLookup, normalizeHeader, parseDate, parseIntOrNull } from "./parsers";
 import { readSheetTab } from "./sheets-client";
+
+const UPSERT_CONCURRENCY = 15;
 
 function parseBoolean(value: string | undefined): boolean {
   if (!value) return false;
@@ -33,8 +36,18 @@ export async function syncProduction() {
   const { headers, rows } = await readSheetTab(SHEET_TABS.production, "pedido");
   const produzidoIndex = findProduzidoColumnIndex(headers);
 
-  let processed = 0;
   let skipped = 0;
+  // Chave -> dado: se a mesma combinação pedido/SKU aparecer mais de uma
+  // vez, a última linha vence — e evita duas requisições concorrentes
+  // tentando upsert na mesma chave.
+  const byKey = new Map<
+    string,
+    {
+      pedido: string;
+      sku: string;
+      data: { cliente: string | null; produto: string; quantidade: number; prazoPostagem: Date | null; canal: string };
+    }
+  >();
 
   for (const row of rows) {
     const r = buildRowLookup(row);
@@ -54,22 +67,28 @@ export async function syncProduction() {
       continue;
     }
 
-    const data = {
-      cliente: r.get("cliente") || null,
-      produto: r.get("produto") || "",
-      quantidade: parseIntOrNull(r.get("quantidade")) ?? 1,
-      prazoPostagem: parseDate(r.get("prazo de postagem", "prazo_postagem", "prazo")),
-      canal,
-    };
+    byKey.set(`${pedido} ${sku}`, {
+      pedido,
+      sku,
+      data: {
+        cliente: r.get("cliente") || null,
+        produto: r.get("produto") || "",
+        quantidade: parseIntOrNull(r.get("quantidade")) ?? 1,
+        prazoPostagem: parseDate(r.get("prazo de postagem", "prazo_postagem", "prazo")),
+        canal,
+      },
+    });
+  }
 
-    await db.productionQueueItem.upsert({
+  const validItems = Array.from(byKey.values());
+
+  await mapWithConcurrency(validItems, UPSERT_CONCURRENCY, ({ pedido, sku, data }) =>
+    db.productionQueueItem.upsert({
       where: { pedido_sku: { pedido, sku } },
       create: { pedido, sku, ...data },
       update: data,
-    });
+    }),
+  );
 
-    processed += 1;
-  }
-
-  return { processed, skipped, total: rows.length };
+  return { processed: validItems.length, skipped, total: rows.length };
 }
