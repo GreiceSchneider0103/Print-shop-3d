@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { SyncStatus } from "@prisma/client";
 
 import { SHEET_TABS } from "./config";
+import { prefetchTabs } from "./sheets-client";
 import { syncChannelFees } from "./sync-channel-fees";
 import { syncDeadlines } from "./sync-deadlines";
 import { syncFixedCosts } from "./sync-fixed-costs";
@@ -42,6 +43,15 @@ export type SyncSummary = {
 
 export async function runFullSync(): Promise<SyncSummary[]> {
   const summaries: SyncSummary[] = [];
+
+  // Busca todas as abas de uma vez (1 requisição) em vez de uma por aba —
+  // ver comentário em `prefetchTabs`. Best-effort: se falhar, cada etapa
+  // cai pro fallback individual (mais lento, mas ainda funciona).
+  try {
+    await prefetchTabs(STEPS.map((step) => step.tab));
+  } catch {
+    // ignorado de propósito — ver comentário acima
+  }
 
   for (const step of STEPS) {
     const startedAt = new Date();

@@ -3,14 +3,21 @@ import { google } from "googleapis";
 import { getServiceAccountCredentials, getSpreadsheetId } from "./config";
 import { normalizeHeader } from "./parsers";
 
-function getAuth() {
-  const { clientEmail, privateKey } = getServiceAccountCredentials();
+// Reutiliza o mesmo client JWT entre chamadas (inclusive entre execuções,
+// se o container do Vercel ficar "quente") — a lib renova o token sozinha
+// quando expira, então não há motivo pra reautenticar a cada aba.
+let cachedAuth: InstanceType<typeof google.auth.JWT> | null = null;
 
-  return new google.auth.JWT({
-    email: clientEmail,
-    key: privateKey,
-    scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
-  });
+function getAuth() {
+  if (!cachedAuth) {
+    const { clientEmail, privateKey } = getServiceAccountCredentials();
+    cachedAuth = new google.auth.JWT({
+      email: clientEmail,
+      key: privateKey,
+      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+    });
+  }
+  return cachedAuth;
 }
 
 /**
@@ -102,6 +109,45 @@ export function parseSheetValues(
   return { headers, rows };
 }
 
+// Cache das abas já lidas nesta execução do sync — populado por
+// `prefetchTabs` (uma chamada batchGet só) e consultado por `readSheetTab`
+// antes de bater na API de novo. Limpo a cada `prefetchTabs`, então nunca
+// serve dado de uma sincronização anterior.
+const tabCache = new Map<string, string[][]>();
+
+/**
+ * Busca várias abas de uma vez com `batchGet` — 1 requisição em vez de uma
+ * por aba. Com 8 abas, isso é a diferença entre ficar bem dentro do timeout
+ * de 60s da função na Vercel (Hobby) e estourar no meio da sincronização
+ * (foi exatamente o que passou a acontecer depois que a aba Produção
+ * entrou no pipeline: 8 requisições sequenciais, cada uma reautenticando
+ * do zero, ultrapassavam o limite e o job morria no meio, sem nem chegar
+ * a gravar erro no log — só as abas já processadas antes do timeout
+ * ficavam registradas).
+ *
+ * Best-effort: se falhar, o cache fica vazio e `readSheetTab` cai pro
+ * fallback de buscar aba por aba (mais lento, mas ainda funciona).
+ */
+export async function prefetchTabs(tabNames: string[]): Promise<void> {
+  tabCache.clear();
+  const uniqueTabs = Array.from(new Set(tabNames));
+  if (uniqueTabs.length === 0) return;
+
+  const auth = getAuth();
+  const sheets = google.sheets({ version: "v4", auth });
+
+  const { data } = await sheets.spreadsheets.values.batchGet({
+    spreadsheetId: getSpreadsheetId(),
+    ranges: uniqueTabs.map(quoteSheetName),
+    valueRenderOption: "FORMATTED_VALUE",
+    dateTimeRenderOption: "FORMATTED_STRING",
+  });
+
+  (data.valueRanges ?? []).forEach((valueRange, index) => {
+    tabCache.set(uniqueTabs[index], (valueRange.values ?? []) as string[][]);
+  });
+}
+
 /**
  * Lê uma aba inteira e devolve como lista de objetos, localizando a linha
  * de cabeçalho de verdade (ver `findHeaderRowIndex` — nem sempre é a
@@ -112,6 +158,9 @@ export function parseSheetValues(
  * `headerHint`: palavra que só aparece no texto do cabeçalho, nunca como
  * valor de dado (ex.: "sku", "situacao") — usada para achar a linha do
  * cabeçalho com segurança em abas que têm título/instrução antes dela.
+ *
+ * Usa o cache populado por `prefetchTabs` quando disponível; sem isso (ou
+ * se a aba não fez parte do prefetch), busca individualmente como antes.
  */
 export async function readSheetTab(
   tabName: string,
@@ -120,15 +169,22 @@ export async function readSheetTab(
   headers: string[];
   rows: Record<string, string>[];
 }> {
-  const auth = getAuth();
-  const sheets = google.sheets({ version: "v4", auth });
+  let values = tabCache.get(tabName);
 
-  const { data } = await sheets.spreadsheets.values.get({
-    spreadsheetId: getSpreadsheetId(),
-    range: quoteSheetName(tabName),
-    valueRenderOption: "FORMATTED_VALUE",
-    dateTimeRenderOption: "FORMATTED_STRING",
-  });
+  if (!values) {
+    const auth = getAuth();
+    const sheets = google.sheets({ version: "v4", auth });
 
-  return parseSheetValues((data.values ?? []) as string[][], headerHint);
+    const { data } = await sheets.spreadsheets.values.get({
+      spreadsheetId: getSpreadsheetId(),
+      range: quoteSheetName(tabName),
+      valueRenderOption: "FORMATTED_VALUE",
+      dateTimeRenderOption: "FORMATTED_STRING",
+    });
+
+    values = (data.values ?? []) as string[][];
+    tabCache.set(tabName, values);
+  }
+
+  return parseSheetValues(values, headerHint);
 }
