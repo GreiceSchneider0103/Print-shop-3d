@@ -8,6 +8,7 @@ import { syncFixedCosts } from "./sync-fixed-costs";
 import { syncOperationConfig } from "./sync-operation-config";
 import { syncOrders } from "./sync-orders";
 import { syncProductRecipe } from "./sync-product-recipe";
+import { syncProduction } from "./sync-production";
 import { syncProducts } from "./sync-products";
 
 type SyncResult = { processed: number; skipped: number; total: number };
@@ -23,6 +24,7 @@ const STEPS: SyncStep[] = [
   { tab: SHEET_TABS.products, run: syncProducts },
   { tab: SHEET_TABS.productRecipe, run: syncProductRecipe },
   { tab: SHEET_TABS.orders, run: syncOrders },
+  { tab: SHEET_TABS.production, run: syncProduction },
   { tab: SHEET_TABS.channelFees, run: syncChannelFees },
   { tab: SHEET_TABS.fixedCosts, run: syncFixedCosts },
   { tab: SHEET_TABS.operationConfig, run: syncOperationConfig },

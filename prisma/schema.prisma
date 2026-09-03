@@ -159,6 +159,9 @@ model ProductionQueueItem {
   criadoEm      DateTime         @default(now()) @map("criado_em")
   atualizadoEm  DateTime         @updatedAt @map("atualizado_em")
 
+  // Natural key da aba "Produção" — permite sincronizar sem duplicar nem
+  // sobrescrever status/estoqueBaixado definidos pelo Kanban.
+  @@unique([pedido, sku])
   @@index([status])
   @@index([prazoPostagem])
   @@index([sku])
