@@ -7,7 +7,11 @@ import { runFullSync, type SyncSummary } from "@/lib/sync/run";
 
 export async function triggerManualSync(): Promise<SyncSummary[]> {
   const summaries = await runFullSync();
-  revalidatePath("/configuracoes");
+  // Sincronização atualiza dados usados por quase todas as páginas
+  // (Dashboard, Vendas, Produtos, Produção, Ficha Técnica...), não só
+  // Configurações — revalida o layout inteiro pra tudo refletir na hora,
+  // não importa de qual página o botão "Sincronizar agora" foi clicado.
+  revalidatePath("/", "layout");
   return summaries;
 }
 

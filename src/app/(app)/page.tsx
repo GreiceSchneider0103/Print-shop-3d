@@ -5,6 +5,7 @@ import { PeriodFilter } from "@/components/dashboard/period-filter";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
+import { SyncNowButton } from "@/components/sync-now-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrencyBRL, formatPercent } from "@/lib/format";
@@ -19,6 +20,9 @@ import {
 import { getDashboardData } from "@/lib/queries/dashboard";
 
 export const dynamic = "force-dynamic";
+// O botão "Sincronizar agora" também vive aqui agora — mesma margem de
+// segurança da página de Configurações para a Server Action de sync.
+export const maxDuration = 60;
 
 export default async function DashboardGeralPage({
   searchParams,
@@ -47,7 +51,12 @@ export default async function DashboardGeralPage({
         icon={LayoutDashboardIcon}
         title="Dashboard Geral"
         description={`${toInputDate(range.from)} até ${toInputDate(range.to)} — comparado ao período anterior equivalente`}
-        actions={<PeriodFilter from={toInputDate(range.from)} to={toInputDate(range.to)} />}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <SyncNowButton />
+            <PeriodFilter from={toInputDate(range.from)} to={toInputDate(range.to)} />
+          </div>
+        }
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
