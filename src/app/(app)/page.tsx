@@ -1,4 +1,4 @@
-import { LayoutDashboardIcon, PackageIcon, ReceiptTextIcon, ShoppingCartIcon, WalletIcon } from "lucide-react";
+import { CalendarClockIcon, LayoutDashboardIcon, PackageIcon, ReceiptTextIcon, ShoppingCartIcon, WalletIcon } from "lucide-react";
 
 import { ChannelBadge } from "@/components/channel-badge";
 import { PeriodFilter } from "@/components/dashboard/period-filter";
@@ -8,7 +8,14 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrencyBRL, formatPercent } from "@/lib/format";
-import { getDateRangeFromSearchParams, getPreviousRange, growthPct, toInputDate } from "@/lib/period";
+import {
+  getDateRangeFromSearchParams,
+  getPreviousRange,
+  getTodayRange,
+  getYesterdayRange,
+  growthPct,
+  toInputDate,
+} from "@/lib/period";
 import { getDashboardData } from "@/lib/queries/dashboard";
 
 export const dynamic = "force-dynamic";
@@ -22,14 +29,17 @@ export default async function DashboardGeralPage({
   const range = getDateRangeFromSearchParams(params);
   const previousRange = getPreviousRange(range);
 
-  const [current, previous] = await Promise.all([
+  const [current, previous, hoje, ontem] = await Promise.all([
     getDashboardData(range),
     getDashboardData(previousRange),
+    getDashboardData(getTodayRange()),
+    getDashboardData(getYesterdayRange()),
   ]);
 
   const faturamentoGrowth = growthPct(current.faturamentoTotal, previous.faturamentoTotal);
   const margemGrowth = growthPct(current.margemTotal, previous.margemTotal);
   const pedidosGrowth = growthPct(current.numPedidos, previous.numPedidos);
+  const faturamentoDiaGrowth = growthPct(hoje.faturamentoTotal, ontem.faturamentoTotal);
 
   return (
     <div className="flex flex-col gap-6">
@@ -40,7 +50,7 @@ export default async function DashboardGeralPage({
         actions={<PeriodFilter from={toInputDate(range.from)} to={toInputDate(range.to)} />}
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard
           icon={WalletIcon}
           label="Faturamento total"
@@ -60,6 +70,13 @@ export default async function DashboardGeralPage({
           growth={pedidosGrowth}
         />
         <StatCard icon={PackageIcon} label="Ticket médio" value={formatCurrencyBRL(current.ticketMedio)} />
+        <StatCard
+          icon={CalendarClockIcon}
+          label="Faturamento do dia"
+          value={formatCurrencyBRL(hoje.faturamentoTotal)}
+          growth={faturamentoDiaGrowth}
+          growthLabel="ontem"
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

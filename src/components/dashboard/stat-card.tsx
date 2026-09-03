@@ -9,12 +9,14 @@ export function StatCard({
   label,
   value,
   growth,
+  growthLabel = "período anterior",
 }: {
   icon: LucideIcon;
   label: string;
   value: string;
-  /** Fração (0.1 = +10%) comparada ao período anterior; omitido quando não há comparativo. */
+  /** Fração (0.1 = +10%) comparada ao período de referência; omitido quando não há comparativo. */
   growth?: number | null;
+  growthLabel?: string;
 }) {
   const hasGrowth = growth !== undefined && growth !== null;
   const isPositive = hasGrowth && growth >= 0;
@@ -35,7 +37,7 @@ export function StatCard({
             )}
           >
             {isPositive ? <TrendingUpIcon className="size-3.5" /> : <TrendingDownIcon className="size-3.5" />}
-            {formatPercent(growth)} vs. período anterior
+            {formatPercent(growth)} vs. {growthLabel}
           </p>
         )}
       </CardContent>

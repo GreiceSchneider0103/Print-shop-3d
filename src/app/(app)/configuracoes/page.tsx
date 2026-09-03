@@ -4,6 +4,7 @@ import {
   RefreshCwIcon,
   SettingsIcon,
   SlidersHorizontalIcon,
+  TargetIcon,
   WalletIcon,
 } from "lucide-react";
 
@@ -14,6 +15,7 @@ import { AddDeadlineButton, EditDeadlineButton } from "@/components/configuracoe
 import { DeleteRowButton } from "@/components/configuracoes/delete-row-button";
 import { AddFixedCostButton, EditFixedCostButton } from "@/components/configuracoes/fixed-cost-form";
 import { EditOperationConfigButton } from "@/components/configuracoes/operation-config-form";
+import { EditRevenueGoalButton } from "@/components/configuracoes/revenue-goal-form";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { SyncNowButton } from "@/components/sync-now-button";
@@ -30,12 +32,13 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export default async function ConfiguracoesPage() {
-  const [channelFees, fixedCosts, operationConfig, deadlines, syncLogs] = await Promise.all([
+  const [channelFees, fixedCosts, operationConfig, deadlines, syncLogs, revenueGoal] = await Promise.all([
     db.channelFee.findMany({ orderBy: [{ canal: "asc" }, { valorMin: "asc" }] }),
     db.fixedCost.findMany({ orderBy: { mes: "desc" }, take: 12 }),
     db.operationConfig.findFirst({ orderBy: { atualizadoEm: "desc" } }),
     db.deadline.findMany({ orderBy: { canal: "asc" } }),
     db.syncLog.findMany({ orderBy: { startedAt: "desc" }, take: 20 }),
+    db.revenueGoal.findUnique({ where: { id: 1 } }),
   ]);
 
   return (
@@ -64,6 +67,10 @@ export default async function ConfiguracoesPage() {
           <TabsTrigger value="prazos">
             <ClockIcon />
             Prazos
+          </TabsTrigger>
+          <TabsTrigger value="meta">
+            <TargetIcon />
+            Meta
           </TabsTrigger>
           <TabsTrigger value="sync">
             <RefreshCwIcon />
@@ -234,6 +241,27 @@ export default async function ConfiguracoesPage() {
               </TableBody>
             </Table>
           )}
+        </TabsContent>
+
+        <TabsContent value="meta">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Meta de faturamento mensal</CardTitle>
+              <EditRevenueGoalButton metaMensal={revenueGoal ? Number(revenueGoal.metaMensal) : 0} />
+            </CardHeader>
+            <CardContent>
+              {revenueGoal && Number(revenueGoal.metaMensal) > 0 ? (
+                <div className="grid grid-cols-2 gap-y-2 text-sm sm:max-w-md">
+                  <span className="text-muted-foreground">Meta mensal</span>
+                  <span>{formatCurrencyBRL(revenueGoal.metaMensal.toString())}</span>
+                  <span className="text-muted-foreground">Atualizado em</span>
+                  <span>{formatDate(revenueGoal.atualizadoEm)}</span>
+                </div>
+              ) : (
+                <EmptyState icon={TargetIcon} message="Nenhuma meta cadastrada ainda — usada como referência no gráfico do Dashboard Mensal." />
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="sync">

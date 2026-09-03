@@ -228,6 +228,18 @@ model Deadline {
 }
 
 // ---------------------------------------------------------------------------
+// Meta de faturamento mensal — não vem da planilha, configurada só no app.
+// Singleton (id sempre 1): não guarda histórico, só o valor vigente.
+// ---------------------------------------------------------------------------
+model RevenueGoal {
+  id           Int      @id @default(1)
+  metaMensal   Decimal  @default(0) @map("meta_mensal") @db.Decimal(12, 2)
+  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+
+  @@map("revenue_goal")
+}
+
+// ---------------------------------------------------------------------------
 // Log de sincronização — suporte ao job de sync (seção 6)
 // ---------------------------------------------------------------------------
 enum SyncStatus {

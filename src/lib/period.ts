@@ -4,8 +4,26 @@ function startOfMonthUTC(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
 }
 
+function startOfDayUTC(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+}
+
 function endOfDayUTC(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 23, 59, 59, 999));
+}
+
+/** Dia calendário (UTC) — mesma convenção usada pra gravar `dataVenda` no sync. */
+export function getDayRange(date: Date): DateRange {
+  return { from: startOfDayUTC(date), to: endOfDayUTC(date) };
+}
+
+export function getTodayRange(): DateRange {
+  return getDayRange(new Date());
+}
+
+export function getYesterdayRange(): DateRange {
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  return getDayRange(yesterday);
 }
 
 /** Lê `?from=YYYY-MM-DD&to=YYYY-MM-DD` da URL; sem parâmetros, usa o mês corrente. */

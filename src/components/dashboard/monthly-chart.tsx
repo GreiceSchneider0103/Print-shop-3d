@@ -1,11 +1,21 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import { formatCurrencyBRL, formatMonth } from "@/lib/format";
 import type { MonthlyPoint } from "@/lib/queries/monthly";
 
-export function MonthlyChart({ data }: { data: MonthlyPoint[] }) {
+export function MonthlyChart({ data, metaMensal }: { data: MonthlyPoint[]; metaMensal?: number }) {
   return (
     <div className="h-72 w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -25,6 +35,14 @@ export function MonthlyChart({ data }: { data: MonthlyPoint[] }) {
           <Bar dataKey="faturamento" name="Faturamento" fill="var(--chart-1)" radius={[4, 4, 0, 0]} />
           <Bar dataKey="margem" name="Margem" fill="var(--chart-2)" radius={[4, 4, 0, 0]} />
           <Bar dataKey="lucroLiquido" name="Lucro líquido" fill="var(--chart-3)" radius={[4, 4, 0, 0]} />
+          {!!metaMensal && (
+            <ReferenceLine
+              y={metaMensal}
+              stroke="var(--foreground)"
+              strokeDasharray="4 4"
+              label={{ value: "Meta", position: "insideTopRight", fontSize: 12 }}
+            />
+          )}
         </BarChart>
       </ResponsiveContainer>
     </div>

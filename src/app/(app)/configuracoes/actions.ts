@@ -129,3 +129,17 @@ export async function deleteDeadline(id: number) {
   await db.deadline.delete({ where: { id } });
   revalidatePath("/configuracoes");
 }
+
+// ---------------------------------------------------------------------------
+// Meta de faturamento mensal — singleton (id sempre 1), não vem da planilha.
+// ---------------------------------------------------------------------------
+export async function saveRevenueGoal(formData: FormData) {
+  await db.revenueGoal.upsert({
+    where: { id: 1 },
+    create: { id: 1, metaMensal: num(formData, "metaMensal") },
+    update: { metaMensal: num(formData, "metaMensal") },
+  });
+  revalidatePath("/configuracoes");
+  revalidatePath("/mensal");
+  revalidatePath("/");
+}
