@@ -41,11 +41,21 @@ export async function syncOperationConfig() {
     depreciacaoManutencao: 0,
   };
   let matched = 0;
+  let ignored = 0;
 
   for (const row of rows) {
     const r = buildRowLookup(row);
     const label = r.get("parametro", "campo") ?? "";
     const valor = parseNumber(r.get("valor"));
+
+    // "Custo operacional total por hora" é um total de exibição só na
+    // planilha (soma das outras linhas) — não existe campo correspondente
+    // no schema, então não conta como "ignorado" (não é um dado perdido).
+    if (matchLabel(label, "custo", "operacional", "total")) {
+      ignored += 1;
+      continue;
+    }
+
     if (!label || valor === null) continue;
 
     if (matchLabel(label, "potencia")) {
@@ -65,7 +75,7 @@ export async function syncOperationConfig() {
   }
 
   if (matched === 0) {
-    return { processed: 0, skipped: rows.length, total: rows.length };
+    return { processed: 0, skipped: rows.length - ignored, total: rows.length };
   }
 
   const latest = await db.operationConfig.findFirst({ orderBy: { atualizadoEm: "desc" } });
@@ -80,5 +90,5 @@ export async function syncOperationConfig() {
     await db.operationConfig.create({ data });
   }
 
-  return { processed: matched, skipped: rows.length - matched, total: rows.length };
+  return { processed: matched, skipped: rows.length - matched - ignored, total: rows.length };
 }

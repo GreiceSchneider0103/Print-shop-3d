@@ -242,6 +242,7 @@ model SyncLog {
   sheetTab         String?    @map("sheet_tab")
   status           SyncStatus
   recordsProcessed Int        @default(0) @map("records_processed")
+  recordsSkipped   Int        @default(0) @map("records_skipped")
   errorMessage     String?    @map("error_message")
   startedAt        DateTime   @map("started_at")
   finishedAt       DateTime?  @map("finished_at")

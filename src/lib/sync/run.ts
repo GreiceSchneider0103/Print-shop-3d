@@ -55,6 +55,7 @@ export async function runFullSync(): Promise<SyncSummary[]> {
           sheetTab: step.tab,
           status,
           recordsProcessed: result.processed,
+          recordsSkipped: result.skipped,
           startedAt,
           finishedAt: new Date(),
         },

@@ -246,6 +246,7 @@ export default async function ConfiguracoesPage() {
                   <TableHead>Aba</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Processados</TableHead>
+                  <TableHead>Ignorados</TableHead>
                   <TableHead>Iniciado em</TableHead>
                   <TableHead>Erro</TableHead>
                 </TableRow>
@@ -264,6 +265,9 @@ export default async function ConfiguracoesPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>{log.recordsProcessed}</TableCell>
+                    <TableCell className={log.recordsSkipped > 0 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}>
+                      {log.recordsSkipped}
+                    </TableCell>
                     <TableCell className="text-muted-foreground">{formatDateTime(log.startedAt)}</TableCell>
                     <TableCell className="text-muted-foreground max-w-xs truncate text-xs">
                       {log.errorMessage ?? "—"}
