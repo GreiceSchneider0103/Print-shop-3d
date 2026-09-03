@@ -18,6 +18,7 @@ import {
   toInputDate,
 } from "@/lib/period";
 import { getDashboardData } from "@/lib/queries/dashboard";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 // O botão "Sincronizar agora" também vive aqui agora — mesma margem de
@@ -46,7 +47,7 @@ export default async function DashboardGeralPage({
   const faturamentoDiaGrowth = growthPct(hoje.faturamentoTotal, ontem.faturamentoTotal);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <PageHeader
         icon={LayoutDashboardIcon}
         title="Dashboard Geral"
@@ -87,6 +88,34 @@ export default async function DashboardGeralPage({
           growthLabel="ontem"
         />
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Resumo financeiro do período</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="flex flex-col gap-1">
+              <span className="text-muted-foreground text-xs">Comissão total</span>
+              <span className="text-lg font-semibold">{formatCurrencyBRL(current.comissaoTotal)}</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-muted-foreground text-xs">Custos do período</span>
+              <span className="text-lg font-semibold">{formatCurrencyBRL(current.custosPeriodo)}</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-muted-foreground text-xs">Faturado (sem comissão)</span>
+              <span className="text-lg font-semibold">{formatCurrencyBRL(current.faturamentoLiquido)}</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-muted-foreground text-xs">Margem líquida (sem custos)</span>
+              <span className={cn("text-lg font-semibold", current.margemLiquida < 0 && "text-destructive")}>
+                {formatCurrencyBRL(current.margemLiquida)}
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>

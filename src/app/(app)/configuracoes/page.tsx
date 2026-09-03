@@ -42,7 +42,7 @@ export default async function ConfiguracoesPage() {
   ]);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <PageHeader
         icon={SettingsIcon}
         title="Configurações"

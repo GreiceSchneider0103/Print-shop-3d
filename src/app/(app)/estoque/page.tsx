@@ -28,7 +28,7 @@ export default async function EstoquePage() {
   const purchaseRows = needs.filter((n) => n.necessidadeCompraG > 0);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <PageHeader
         icon={BoxesIcon}
         title="Insumos / Estoque"

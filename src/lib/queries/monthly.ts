@@ -13,9 +13,18 @@ function monthKey(date: Date): string {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
-export async function getMonthlySeries(months = 12): Promise<MonthlyPoint[]> {
+/**
+ * Começa no mês do primeiro pedido registrado (quando a operação
+ * realmente começou), não numa janela fixa de N meses — evita mostrar
+ * meses vazios antes da loja existir.
+ */
+export async function getMonthlySeries(): Promise<MonthlyPoint[]> {
   const now = new Date();
-  const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (months - 1), 1));
+  const earliestOrder = await db.order.aggregate({ _min: { dataVenda: true } });
+  const earliestDate = earliestOrder._min.dataVenda ?? now;
+  const from = new Date(Date.UTC(earliestDate.getUTCFullYear(), earliestDate.getUTCMonth(), 1));
+  const months =
+    (now.getUTCFullYear() - from.getUTCFullYear()) * 12 + (now.getUTCMonth() - from.getUTCMonth()) + 1;
 
   const [orders, fixedCosts] = await Promise.all([
     db.order.findMany({ where: { dataVenda: { gte: from } } }),

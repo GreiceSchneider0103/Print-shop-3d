@@ -24,10 +24,26 @@ export type DashboardData = {
   numPedidos: number;
   itensVendidos: number;
   ticketMedio: number;
+  comissaoTotal: number;
+  custosPeriodo: number;
+  faturamentoLiquido: number;
+  margemLiquida: number;
   porCanal: ChannelBreakdown[];
   topPorMargem: ProductRanking[];
   topPorFaturamento: ProductRanking[];
 };
+
+/** Custos fixos são mensais — soma os meses que o período cobre (por competência, não por dia exato). */
+async function loadCustosPeriodo(range: DateRange): Promise<number> {
+  const fromMonth = new Date(Date.UTC(range.from.getUTCFullYear(), range.from.getUTCMonth(), 1));
+  const toMonth = new Date(Date.UTC(range.to.getUTCFullYear(), range.to.getUTCMonth(), 1));
+
+  const fixedCosts = await db.fixedCost.findMany({
+    where: { mes: { gte: fromMonth, lte: toMonth } },
+  });
+
+  return fixedCosts.reduce((sum, fc) => sum + Number(fc.total), 0);
+}
 
 async function loadOrdersWithMargin(range: DateRange) {
   const orders = await db.order.findMany({
@@ -47,10 +63,11 @@ async function loadOrdersWithMargin(range: DateRange) {
 }
 
 export async function getDashboardData(range: DateRange): Promise<DashboardData> {
-  const enriched = await loadOrdersWithMargin(range);
+  const [enriched, custosPeriodo] = await Promise.all([loadOrdersWithMargin(range), loadCustosPeriodo(range)]);
 
   const faturamentoTotal = enriched.reduce((sum, e) => sum + Number(e.order.valorTotal), 0);
   const margemTotal = enriched.reduce((sum, e) => sum + e.margem, 0);
+  const comissaoTotal = enriched.reduce((sum, e) => sum + Number(e.order.comissao), 0);
   const numPedidos = new Set(enriched.map((e) => e.order.numeroPedido)).size;
   const itensVendidos = enriched.reduce((sum, e) => sum + e.order.quantidade, 0);
 
@@ -90,6 +107,10 @@ export async function getDashboardData(range: DateRange): Promise<DashboardData>
     margemPct: faturamentoTotal > 0 ? margemTotal / faturamentoTotal : 0,
     numPedidos,
     itensVendidos,
+    comissaoTotal,
+    custosPeriodo,
+    faturamentoLiquido: faturamentoTotal - comissaoTotal,
+    margemLiquida: margemTotal - custosPeriodo,
     ticketMedio: numPedidos > 0 ? faturamentoTotal / numPedidos : 0,
     porCanal: Array.from(canalMap.values()).sort((a, b) => b.faturamento - a.faturamento),
     topPorMargem: [...produtos].sort((a, b) => b.margem - a.margem).slice(0, 5),

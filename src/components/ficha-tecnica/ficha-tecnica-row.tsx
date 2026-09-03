@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { filamentColorClass } from "@/lib/filament-color";
-import { formatCurrencyBRL } from "@/lib/format";
+import { formatCurrencyBRL, truncateWords } from "@/lib/format";
 
 type Entry = { filamento: string; gramas: string };
 
@@ -75,7 +75,9 @@ export function FichaTecnicaRow({ product }: { product: FichaTecnicaProduct }) {
   return (
     <TableRow>
       <TableCell className="align-top font-mono text-xs">{product.sku}</TableCell>
-      <TableCell className="max-w-[220px] align-top text-sm font-medium">{product.produto || "—"}</TableCell>
+      <TableCell className="max-w-[200px] align-top text-sm font-medium whitespace-normal" title={product.produto}>
+        {product.produto ? truncateWords(product.produto, 4) : "—"}
+      </TableCell>
       <TableCell className="align-top">
         <div className="flex min-w-[280px] flex-col gap-1.5">
           {entries.length === 0 && <p className="text-muted-foreground text-xs">Sem filamento cadastrado.</p>}

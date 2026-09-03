@@ -36,3 +36,10 @@ export function formatMonth(value: Date | string): string {
     timeZone: "UTC",
   }).format(date);
 }
+
+/** Nomes de produto da planilha costumam ser bem longos — mostra só as primeiras N palavras. */
+export function truncateWords(text: string, wordCount: number): string {
+  const words = text.trim().split(/\s+/);
+  if (words.length <= wordCount) return text;
+  return `${words.slice(0, wordCount).join(" ")}…`;
+}

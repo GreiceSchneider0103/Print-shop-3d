@@ -8,7 +8,6 @@ import { syncDeadlines } from "./sync-deadlines";
 import { syncFixedCosts } from "./sync-fixed-costs";
 import { syncOperationConfig } from "./sync-operation-config";
 import { syncOrders } from "./sync-orders";
-import { syncProductRecipe } from "./sync-product-recipe";
 import { syncProduction } from "./sync-production";
 import { syncProducts } from "./sync-products";
 
@@ -19,11 +18,15 @@ type SyncStep = {
   run: () => Promise<SyncResult>;
 };
 
-// Ordem importa: products antes de product_recipe (FK), e orders pode ser
-// independente. As demais são tabelas de configuração simples.
+// Ordem importa: orders pode ser independente. As demais são tabelas de
+// configuração simples.
+//
+// Ficha Técnica (product_recipe) saiu do pipeline: a partir de agora o
+// cadastro de filamento por SKU é mantido só pela edição em linha da
+// página /ficha-tecnica — sincronizar de novo sobrescreveria o que for
+// editado manualmente no app.
 const STEPS: SyncStep[] = [
   { tab: SHEET_TABS.products, run: syncProducts },
-  { tab: SHEET_TABS.productRecipe, run: syncProductRecipe },
   { tab: SHEET_TABS.orders, run: syncOrders },
   { tab: SHEET_TABS.production, run: syncProduction },
   { tab: SHEET_TABS.channelFees, run: syncChannelFees },

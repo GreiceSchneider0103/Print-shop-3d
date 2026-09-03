@@ -33,7 +33,7 @@ export default async function ProducaoPage() {
   }));
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <PageHeader
         icon={FactoryIcon}
         title="Produção"

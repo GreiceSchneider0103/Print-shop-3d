@@ -13,17 +13,17 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardMensalPage() {
   const [series, revenueGoal] = await Promise.all([
-    getMonthlySeries(12),
+    getMonthlySeries(),
     db.revenueGoal.findUnique({ where: { id: 1 } }),
   ]);
   const metaMensal = revenueGoal ? Number(revenueGoal.metaMensal) : 0;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <PageHeader
         icon={LineChartIcon}
         title="Dashboard Mensal"
-        description="Últimos 12 meses — clique num mês para ver os pedidos"
+        description="Desde o início da operação — clique num mês para ver os pedidos"
       />
 
       <Card>

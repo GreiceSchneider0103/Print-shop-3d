@@ -32,7 +32,7 @@ export default async function OrderDetailPage({
   ];
 
   return (
-    <div className="flex max-w-2xl flex-col gap-6">
+    <div className="flex max-w-2xl flex-col gap-5">
       <div>
         <Link
           href="/vendas"

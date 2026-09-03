@@ -23,12 +23,12 @@ export function StatCard({
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-0">
-        <CardTitle>{label}</CardTitle>
-        <Icon className="text-muted-foreground size-4" />
+      <CardHeader className="flex flex-row items-center justify-between gap-2 pb-0">
+        <CardTitle className="text-xs">{label}</CardTitle>
+        <Icon className="text-muted-foreground size-3.5 shrink-0" />
       </CardHeader>
-      <CardContent className="pt-2">
-        <div className="text-2xl font-semibold tracking-tight">{value}</div>
+      <CardContent className="pt-1.5">
+        <div className="text-xl font-semibold tracking-tight">{value}</div>
         {hasGrowth && (
           <p
             className={cn(

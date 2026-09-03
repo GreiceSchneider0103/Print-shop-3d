@@ -37,7 +37,7 @@ export default async function VendasPage({
   const { orders, total, totalPages, canais, situacoes } = await listOrders(params, page);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <PageHeader
         icon={ShoppingCartIcon}
         title="Vendas / Pedidos"

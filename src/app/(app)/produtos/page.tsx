@@ -29,7 +29,7 @@ export default async function AnaliseProdutoPage({
   const products = await getProductAnalysis(range);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <PageHeader
         icon={PackageIcon}
         title="Análise por Produto"
