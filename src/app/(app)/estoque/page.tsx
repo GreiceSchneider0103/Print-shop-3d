@@ -152,16 +152,16 @@ export default async function EstoquePage() {
                 ))}
                 {unmatched.map((u) => (
                   <TableRow key={u.filamento} className="bg-amber-500/5">
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
+                    <TableCell className="font-medium whitespace-normal">
+                      <div className="flex flex-wrap items-center gap-2">
                         {u.filamento}
-                        <Badge variant="warning" className="gap-1">
+                        <Badge variant="warning" className="gap-1 whitespace-nowrap">
                           <TriangleAlertIcon className="size-3" />
-                          Sem cadastro no estoque
+                          Sem cadastro
                         </Badge>
                       </div>
                     </TableCell>
-                    <TableCell colSpan={4} className="text-muted-foreground">
+                    <TableCell colSpan={4} className="text-muted-foreground max-w-0 whitespace-normal">
                       Precisa de {u.necessidadeProducaoG.toLocaleString("pt-BR")} g pra fila pendente — cadastre
                       este insumo na aba &quot;Insumos&quot; pra acompanhar o estoque.
                     </TableCell>

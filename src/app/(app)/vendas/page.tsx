@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { OrdersFilter } from "@/components/vendas/orders-filter";
 import { formatCurrencyBRL, formatDate } from "@/lib/format";
 import { listOrders, type OrderFilters } from "@/lib/queries/orders";
@@ -36,6 +36,10 @@ export default async function VendasPage({
   const params = await searchParams;
   const page = Number(params.page ?? 1) || 1;
   const { orders, total, totalPages, canais, situacoes } = await listOrders(params, page);
+
+  const totalQtd = orders.reduce((acc, { order }) => acc + order.quantidade, 0);
+  const totalValor = orders.reduce((acc, { order }) => acc + Number(order.valorTotal), 0);
+  const totalMargem = orders.reduce((acc, { margem }) => acc + margem, 0);
 
   return (
     <div className="flex flex-col gap-5">
@@ -93,6 +97,17 @@ export default async function VendasPage({
               );
             })}
           </TableBody>
+          <TableFooter>
+            <TableRow>
+              <TableCell colSpan={5}>Total da página</TableCell>
+              <TableCell className="text-right">{totalQtd}</TableCell>
+              <TableCell className="text-right">{formatCurrencyBRL(totalValor)}</TableCell>
+              <TableCell className={cn("text-right", totalMargem < 0 && "text-destructive")}>
+                {formatCurrencyBRL(totalMargem)}
+              </TableCell>
+              <TableCell />
+            </TableRow>
+          </TableFooter>
         </Table>
       )}
 

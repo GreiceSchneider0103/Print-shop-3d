@@ -75,7 +75,7 @@ export function FichaTecnicaRow({ product }: { product: FichaTecnicaProduct }) {
   return (
     <TableRow>
       <TableCell className="align-top font-mono text-xs">{product.sku}</TableCell>
-      <TableCell className="max-w-[200px] align-top text-sm font-medium whitespace-normal" title={product.produto}>
+      <TableCell className="max-w-[280px] align-top text-sm font-medium whitespace-normal" title={product.produto}>
         {product.produto ? truncateWords(product.produto, 4) : "—"}
       </TableCell>
       <TableCell className="align-top">
