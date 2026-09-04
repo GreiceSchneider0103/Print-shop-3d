@@ -60,7 +60,7 @@ export default async function DashboardGeralPage({
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={WalletIcon}
           label="Faturamento total"
@@ -70,22 +70,30 @@ export default async function DashboardGeralPage({
         <StatCard
           icon={ReceiptTextIcon}
           label="Margem"
-          value={`${formatCurrencyBRL(current.margemTotal)} (${formatPercent(current.margemPct)})`}
+          value={
+            <>
+              {formatCurrencyBRL(current.margemTotal)}{" "}
+              <span className="text-muted-foreground text-xs font-normal">
+                ({formatPercent(current.margemPct)})
+              </span>
+            </>
+          }
           growth={margemGrowth}
         />
         <StatCard
           icon={ShoppingCartIcon}
-          label="Nº de pedidos"
+          label="Pedidos"
           value={String(current.numPedidos)}
           growth={pedidosGrowth}
+          footer={`Ticket médio: ${formatCurrencyBRL(current.ticketMedio)}`}
         />
-        <StatCard icon={PackageIcon} label="Ticket médio" value={formatCurrencyBRL(current.ticketMedio)} />
         <StatCard
           icon={CalendarClockIcon}
           label="Faturamento do dia"
           value={formatCurrencyBRL(hoje.faturamentoTotal)}
           growth={faturamentoDiaGrowth}
           growthLabel="ontem"
+          footer={`Pedidos hoje: ${hoje.numPedidos}`}
         />
       </div>
 
@@ -94,22 +102,26 @@ export default async function DashboardGeralPage({
           <CardTitle>Resumo financeiro do período</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div className="flex flex-col gap-1">
               <span className="text-muted-foreground text-xs">Comissão total</span>
-              <span className="text-lg font-semibold">{formatCurrencyBRL(current.comissaoTotal)}</span>
+              <span className="text-base font-semibold sm:text-lg">{formatCurrencyBRL(current.comissaoTotal)}</span>
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-muted-foreground text-xs">Custos do período</span>
-              <span className="text-lg font-semibold">{formatCurrencyBRL(current.custosPeriodo)}</span>
+              <span className="text-base font-semibold sm:text-lg">{formatCurrencyBRL(current.custosPeriodo)}</span>
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-muted-foreground text-xs">Faturado (sem comissão)</span>
-              <span className="text-lg font-semibold">{formatCurrencyBRL(current.faturamentoLiquido)}</span>
+              <span className="text-base font-semibold sm:text-lg">
+                {formatCurrencyBRL(current.faturamentoLiquido)}
+              </span>
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-muted-foreground text-xs">Margem líquida (sem custos)</span>
-              <span className={cn("text-lg font-semibold", current.margemLiquida < 0 && "text-destructive")}>
+              <span
+                className={cn("text-base font-semibold sm:text-lg", current.margemLiquida < 0 && "text-destructive")}
+              >
                 {formatCurrencyBRL(current.margemLiquida)}
               </span>
             </div>

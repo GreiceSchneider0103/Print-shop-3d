@@ -64,3 +64,54 @@ export async function getMonthlySeries(): Promise<MonthlyPoint[]> {
 
   return Array.from(points.values());
 }
+
+export type MonthProjection = {
+  month: string;
+  diasDecorridos: number;
+  diasNoMes: number;
+  faturamentoLiquidoProjetado: number;
+  margemLiquidaProjetada: number;
+};
+
+/**
+ * Projeção simples de "ritmo atual": extrapola faturamento e margem do mês
+ * corrente linearmente pelos dias já decorridos, e desconta o custo fixo
+ * do mês inteiro (não pro-rateado, já que custo fixo não varia por dia).
+ */
+export async function getCurrentMonthProjection(): Promise<MonthProjection | null> {
+  const now = new Date();
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const diasNoMes = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0)).getUTCDate();
+  const diasDecorridos = now.getUTCDate();
+
+  const [orders, fixedCost] = await Promise.all([
+    db.order.findMany({ where: { dataVenda: { gte: monthStart, lte: now } } }),
+    db.fixedCost.findFirst({ where: { mes: monthStart } }),
+  ]);
+
+  if (orders.length === 0) return null;
+
+  const skus = Array.from(new Set(orders.map((o) => o.sku)));
+  const products = skus.length ? await db.product.findMany({ where: { sku: { in: skus } } }) : [];
+  const productBySku = new Map(products.map((p) => [p.sku, p]));
+
+  let faturamento = 0;
+  let comissao = 0;
+  let margem = 0;
+  for (const order of orders) {
+    faturamento += Number(order.valorTotal);
+    comissao += Number(order.comissao);
+    margem += computeOrderMargin(order, productBySku.get(order.sku)).margem;
+  }
+
+  const custosFixos = fixedCost ? Number(fixedCost.total) : 0;
+  const fator = diasNoMes / diasDecorridos;
+
+  return {
+    month: monthKey(monthStart),
+    diasDecorridos,
+    diasNoMes,
+    faturamentoLiquidoProjetado: (faturamento - comissao) * fator,
+    margemLiquidaProjetada: margem * fator - custosFixos,
+  };
+}

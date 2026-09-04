@@ -7,15 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { db } from "@/lib/db";
 import { formatCurrencyBRL, formatMonth } from "@/lib/format";
-import { getMonthlySeries } from "@/lib/queries/monthly";
+import { getCurrentMonthProjection, getMonthlySeries } from "@/lib/queries/monthly";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardMensalPage() {
-  const [series, revenueGoal] = await Promise.all([
+  const [series, revenueGoal, projection] = await Promise.all([
     getMonthlySeries(),
     db.revenueGoal.findUnique({ where: { id: 1 } }),
+    getCurrentMonthProjection(),
   ]);
   const metaMensal = revenueGoal ? Number(revenueGoal.metaMensal) : 0;
 
@@ -27,14 +28,50 @@ export default async function DashboardMensalPage() {
         description="Desde o início da operação — clique num mês para ver os pedidos"
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Evolução mensal</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <MonthlyChart data={series} metaMensal={metaMensal} />
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Evolução mensal</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MonthlyChart data={series} metaMensal={metaMensal} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Projeção{projection ? ` — ${formatMonth(`${projection.month}-01`)}` : ""}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {projection ? (
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground text-xs">Faturamento líquido projetado</span>
+                  <span className="text-xl font-semibold">
+                    {formatCurrencyBRL(projection.faturamentoLiquidoProjetado)}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground text-xs">Margem líquida projetada</span>
+                  <span
+                    className={cn(
+                      "text-xl font-semibold",
+                      projection.margemLiquidaProjetada < 0 && "text-destructive",
+                    )}
+                  >
+                    {formatCurrencyBRL(projection.margemLiquidaProjetada)}
+                  </span>
+                </div>
+                <p className="text-muted-foreground text-xs">
+                  Baseado no ritmo dos primeiros {projection.diasDecorridos} de {projection.diasNoMes} dias do mês.
+                </p>
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-sm">Nenhum pedido registrado neste mês ainda.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>

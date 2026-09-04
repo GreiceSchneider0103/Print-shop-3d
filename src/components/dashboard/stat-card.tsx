@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { TrendingDownIcon, TrendingUpIcon, type LucideIcon } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,13 +11,16 @@ export function StatCard({
   value,
   growth,
   growthLabel = "período anterior",
+  footer,
 }: {
   icon: LucideIcon;
   label: string;
-  value: string;
+  value: ReactNode;
   /** Fração (0.1 = +10%) comparada ao período de referência; omitido quando não há comparativo. */
   growth?: number | null;
   growthLabel?: string;
+  /** Linha extra abaixo do crescimento — pra métrica secundária relacionada (ex: ticket médio junto de nº de pedidos). */
+  footer?: ReactNode;
 }) {
   const hasGrowth = growth !== undefined && growth !== null;
   const isPositive = hasGrowth && growth >= 0;
@@ -40,6 +44,7 @@ export function StatCard({
             {formatPercent(growth)} vs. {growthLabel}
           </p>
         )}
+        {footer && <p className="text-muted-foreground mt-1 text-xs">{footer}</p>}
       </CardContent>
     </Card>
   );
