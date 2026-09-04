@@ -81,7 +81,7 @@ export function KanbanBoard({ items: initialItems }: { items: KanbanItem[] }) {
             <CardHeader className="pt-4">
               <CardTitle className="flex items-center justify-between">
                 {column.label}
-                <Badge variant="secondary">{columnItems.length}</Badge>
+                <Badge variant="outline">{columnItems.length}</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
@@ -110,6 +110,7 @@ export function KanbanBoard({ items: initialItems }: { items: KanbanItem[] }) {
                     <div className="truncate">
                       {item.produto} × {item.quantidade}
                     </div>
+                    {item.cliente && <div className="text-muted-foreground truncate text-xs">{item.cliente}</div>}
                     {item.prazoPostagem && (
                       <div className={cn("text-xs", late ? "text-destructive font-medium" : "text-muted-foreground")}>
                         {late ? "Atrasado — postar até" : "Postar até"} {formatDate(item.prazoPostagem)}

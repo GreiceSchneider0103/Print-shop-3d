@@ -195,7 +195,7 @@ export default async function EstoquePage() {
                     <TableCell className="font-medium">{m.insumo}</TableCell>
                     <TableCell>
                       <Badge
-                        variant={m.tipo === "SAIDA" ? "destructive" : m.tipo === "ENTRADA" ? "success" : "secondary"}
+                        variant={m.tipo === "SAIDA" ? "destructive" : m.tipo === "ENTRADA" ? "success" : "outline"}
                       >
                         {MOVEMENT_LABEL[m.tipo]}
                       </Badge>

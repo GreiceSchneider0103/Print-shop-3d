@@ -24,7 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { db } from "@/lib/db";
-import { formatCurrencyBRL, formatDate, formatDateTime, formatPercent } from "@/lib/format";
+import { formatCurrencyBRL, formatDate, formatDateTime, formatMonth, formatPercent } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 // Server Action nesta página chama o sync completo (7 abas) — precisa de
@@ -89,9 +89,9 @@ export default async function ConfiguracoesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Canal</TableHead>
-                  <TableHead>Faixa</TableHead>
-                  <TableHead>Comissão</TableHead>
-                  <TableHead>Taxa fixa</TableHead>
+                  <TableHead className="text-right">Faixa</TableHead>
+                  <TableHead className="text-right">Comissão</TableHead>
+                  <TableHead className="text-right">Taxa fixa</TableHead>
                   <TableHead>Observação</TableHead>
                   <TableHead className="w-20" />
                 </TableRow>
@@ -102,11 +102,11 @@ export default async function ConfiguracoesPage() {
                     <TableCell>
                       <ChannelBadge canal={fee.canal} />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-right">
                       {formatCurrencyBRL(fee.valorMin.toString())} – {formatCurrencyBRL(fee.valorMax.toString())}
                     </TableCell>
-                    <TableCell>{formatPercent(Number(fee.comissaoPct))}</TableCell>
-                    <TableCell>{formatCurrencyBRL(fee.taxaFixa.toString())}</TableCell>
+                    <TableCell className="text-right">{formatPercent(Number(fee.comissaoPct))}</TableCell>
+                    <TableCell className="text-right">{formatCurrencyBRL(fee.taxaFixa.toString())}</TableCell>
                     <TableCell className="text-muted-foreground max-w-xs truncate">
                       {fee.observacao ?? "—"}
                     </TableCell>
@@ -137,27 +137,27 @@ export default async function ConfiguracoesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Mês</TableHead>
-                  <TableHead>Ads</TableHead>
-                  <TableHead>Tiny</TableHead>
-                  <TableHead>MEI</TableHead>
-                  <TableHead>Parcela</TableHead>
-                  <TableHead>Outros</TableHead>
-                  <TableHead>Reembolso</TableHead>
-                  <TableHead>Total</TableHead>
+                  <TableHead className="text-right">Ads</TableHead>
+                  <TableHead className="text-right">Tiny</TableHead>
+                  <TableHead className="text-right">MEI</TableHead>
+                  <TableHead className="text-right">Parcela</TableHead>
+                  <TableHead className="text-right">Outros</TableHead>
+                  <TableHead className="text-right">Reembolso</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
                   <TableHead className="w-20" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {fixedCosts.map((cost) => (
                   <TableRow key={cost.id}>
-                    <TableCell>{formatDate(cost.mes)}</TableCell>
-                    <TableCell>{formatCurrencyBRL(cost.ads.toString())}</TableCell>
-                    <TableCell>{formatCurrencyBRL(cost.tiny.toString())}</TableCell>
-                    <TableCell>{formatCurrencyBRL(cost.mei.toString())}</TableCell>
-                    <TableCell>{formatCurrencyBRL(cost.parcela.toString())}</TableCell>
-                    <TableCell>{formatCurrencyBRL(cost.outros.toString())}</TableCell>
-                    <TableCell>{formatCurrencyBRL(cost.reembolso.toString())}</TableCell>
-                    <TableCell className="font-medium">{formatCurrencyBRL(cost.total.toString())}</TableCell>
+                    <TableCell className="capitalize">{formatMonth(cost.mes)}</TableCell>
+                    <TableCell className="text-right">{formatCurrencyBRL(cost.ads.toString())}</TableCell>
+                    <TableCell className="text-right">{formatCurrencyBRL(cost.tiny.toString())}</TableCell>
+                    <TableCell className="text-right">{formatCurrencyBRL(cost.mei.toString())}</TableCell>
+                    <TableCell className="text-right">{formatCurrencyBRL(cost.parcela.toString())}</TableCell>
+                    <TableCell className="text-right">{formatCurrencyBRL(cost.outros.toString())}</TableCell>
+                    <TableCell className="text-right">{formatCurrencyBRL(cost.reembolso.toString())}</TableCell>
+                    <TableCell className="text-right font-medium">{formatCurrencyBRL(cost.total.toString())}</TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-1">
                         <EditFixedCostButton cost={cost} />

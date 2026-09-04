@@ -130,9 +130,9 @@ export default async function DashboardGeralPage({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Canal</TableHead>
-                    <TableHead>Pedidos</TableHead>
-                    <TableHead>Faturamento</TableHead>
-                    <TableHead>Margem</TableHead>
+                    <TableHead className="text-right">Pedidos</TableHead>
+                    <TableHead className="text-right">Faturamento</TableHead>
+                    <TableHead className="text-right">Margem</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -141,9 +141,9 @@ export default async function DashboardGeralPage({
                       <TableCell>
                         <ChannelBadge canal={c.canal} />
                       </TableCell>
-                      <TableCell>{c.pedidos}</TableCell>
-                      <TableCell>{formatCurrencyBRL(c.faturamento)}</TableCell>
-                      <TableCell className={c.margem < 0 ? "text-destructive" : undefined}>
+                      <TableCell className="text-right">{c.pedidos}</TableCell>
+                      <TableCell className="text-right">{formatCurrencyBRL(c.faturamento)}</TableCell>
+                      <TableCell className={cn("text-right", c.margem < 0 && "text-destructive")}>
                         {formatCurrencyBRL(c.margem)}
                       </TableCell>
                     </TableRow>
@@ -167,7 +167,7 @@ export default async function DashboardGeralPage({
                   <TableRow>
                     <TableHead>SKU</TableHead>
                     <TableHead>Produto</TableHead>
-                    <TableHead>Margem</TableHead>
+                    <TableHead className="text-right">Margem</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -175,7 +175,7 @@ export default async function DashboardGeralPage({
                     <TableRow key={p.sku}>
                       <TableCell className="font-mono text-xs">{p.sku}</TableCell>
                       <TableCell className="max-w-[220px] truncate">{p.produto}</TableCell>
-                      <TableCell className={p.margem < 0 ? "text-destructive" : undefined}>
+                      <TableCell className={cn("text-right", p.margem < 0 && "text-destructive")}>
                         {formatCurrencyBRL(p.margem)}
                       </TableCell>
                     </TableRow>

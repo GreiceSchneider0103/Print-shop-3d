@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { db } from "@/lib/db";
 import { formatCurrencyBRL, formatMonth } from "@/lib/format";
 import { getMonthlySeries } from "@/lib/queries/monthly";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -44,10 +45,10 @@ export default async function DashboardMensalPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Mês</TableHead>
-                <TableHead>Faturamento</TableHead>
-                <TableHead>Margem</TableHead>
-                <TableHead>Custos fixos</TableHead>
-                <TableHead>Lucro líquido</TableHead>
+                <TableHead className="text-right">Faturamento</TableHead>
+                <TableHead className="text-right">Margem</TableHead>
+                <TableHead className="text-right">Custos fixos</TableHead>
+                <TableHead className="text-right">Lucro líquido</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -61,12 +62,14 @@ export default async function DashboardMensalPage() {
                       {formatMonth(`${point.month}-01`)}
                     </Link>
                   </TableCell>
-                  <TableCell>{formatCurrencyBRL(point.faturamento)}</TableCell>
-                  <TableCell className={point.margem < 0 ? "text-destructive" : undefined}>
+                  <TableCell className="text-right">{formatCurrencyBRL(point.faturamento)}</TableCell>
+                  <TableCell className={cn("text-right", point.margem < 0 && "text-destructive")}>
                     {formatCurrencyBRL(point.margem)}
                   </TableCell>
-                  <TableCell>{formatCurrencyBRL(point.custosFixos)}</TableCell>
-                  <TableCell className={point.lucroLiquido < 0 ? "text-destructive font-medium" : "font-medium"}>
+                  <TableCell className="text-right">{formatCurrencyBRL(point.custosFixos)}</TableCell>
+                  <TableCell
+                    className={cn("text-right font-medium", point.lucroLiquido < 0 && "text-destructive")}
+                  >
                     {formatCurrencyBRL(point.lucroLiquido)}
                   </TableCell>
                 </TableRow>

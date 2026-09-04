@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { OrdersFilter } from "@/components/vendas/orders-filter";
 import { formatCurrencyBRL, formatDate } from "@/lib/format";
 import { listOrders, type OrderFilters } from "@/lib/queries/orders";
+import { cn } from "@/lib/utils";
 
 const PROBLEM_SITUATIONS = ["cancelado", "cancelada", "reembolsado", "reembolsada", "devolvido", "devolvida"];
 
@@ -50,16 +51,16 @@ export default async function VendasPage({
         <EmptyState icon={ShoppingCartIcon} message="Nenhum pedido encontrado para os filtros selecionados." />
       ) : (
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-card sticky top-0 z-10">
             <TableRow>
               <TableHead>Pedido</TableHead>
               <TableHead>Data</TableHead>
               <TableHead>Canal</TableHead>
               <TableHead>SKU</TableHead>
               <TableHead>Produto</TableHead>
-              <TableHead>Qtd</TableHead>
-              <TableHead>Valor</TableHead>
-              <TableHead>Margem</TableHead>
+              <TableHead className="text-right">Qtd</TableHead>
+              <TableHead className="text-right">Valor</TableHead>
+              <TableHead className="text-right">Margem</TableHead>
               <TableHead>Situação</TableHead>
             </TableRow>
           </TableHeader>
@@ -80,13 +81,13 @@ export default async function VendasPage({
                   </TableCell>
                   <TableCell className="font-mono text-xs">{order.sku}</TableCell>
                   <TableCell className="max-w-[240px] truncate">{order.produto}</TableCell>
-                  <TableCell>{order.quantidade}</TableCell>
-                  <TableCell>{formatCurrencyBRL(order.valorTotal.toString())}</TableCell>
-                  <TableCell className={margem < 0 ? "text-destructive" : undefined}>
+                  <TableCell className="text-right">{order.quantidade}</TableCell>
+                  <TableCell className="text-right">{formatCurrencyBRL(order.valorTotal.toString())}</TableCell>
+                  <TableCell className={cn("text-right", margem < 0 && "text-destructive")}>
                     {formatCurrencyBRL(margem)}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={isProblem ? "destructive" : "secondary"}>{order.situacao}</Badge>
+                    <Badge variant={isProblem ? "destructive" : "success"}>{order.situacao}</Badge>
                   </TableCell>
                 </TableRow>
               );

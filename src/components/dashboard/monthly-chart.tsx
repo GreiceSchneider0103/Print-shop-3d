@@ -26,7 +26,12 @@ export function MonthlyChart({ data, metaMensal }: { data: MonthlyPoint[]; metaM
             tick={{ fontSize: 12 }}
             tickFormatter={(value: string) => formatMonth(`${value}-01`)}
           />
-          <YAxis tick={{ fontSize: 12 }} tickFormatter={(v: number) => formatCurrencyBRL(v)} width={90} />
+          <YAxis
+            tick={{ fontSize: 12 }}
+            tickFormatter={(v: number) => formatCurrencyBRL(v)}
+            width={90}
+            domain={([dataMin, dataMax]: readonly [number, number]) => [Math.min(0, dataMin), Math.max(0, dataMax)]}
+          />
           <Tooltip
             formatter={(value) => formatCurrencyBRL(Number(value))}
             labelFormatter={(value) => (typeof value === "string" ? formatMonth(`${value}-01`) : value)}

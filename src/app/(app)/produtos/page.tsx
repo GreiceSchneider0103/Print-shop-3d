@@ -10,11 +10,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { formatCurrencyBRL, formatPercent } from "@/lib/format";
 import { getDateRangeFromSearchParams, toInputDate } from "@/lib/period";
 import { getProductAnalysis } from "@/lib/queries/products";
+import { cn } from "@/lib/utils";
 
 const CLASSE_VARIANT = {
   A: "success",
   B: "warning",
-  C: "secondary",
+  C: "outline",
 } as const;
 
 export const dynamic = "force-dynamic";
@@ -56,11 +57,11 @@ export default async function AnaliseProdutoPage({
                 <TableHead>Classe</TableHead>
                 <TableHead>SKU</TableHead>
                 <TableHead>Produto</TableHead>
-                <TableHead>Qtd. vendida</TableHead>
-                <TableHead>Faturamento</TableHead>
-                <TableHead>Margem</TableHead>
-                <TableHead>Margem %</TableHead>
-                <TableHead>Acumulado</TableHead>
+                <TableHead className="text-right">Qtd. vendida</TableHead>
+                <TableHead className="text-right">Faturamento</TableHead>
+                <TableHead className="text-right">Margem</TableHead>
+                <TableHead className="text-right">Margem %</TableHead>
+                <TableHead className="text-right">Acumulado</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -71,13 +72,15 @@ export default async function AnaliseProdutoPage({
                   </TableCell>
                   <TableCell className="font-mono text-xs">{p.sku}</TableCell>
                   <TableCell className="max-w-[240px] truncate">{p.produto}</TableCell>
-                  <TableCell>{p.quantidade}</TableCell>
-                  <TableCell>{formatCurrencyBRL(p.faturamento)}</TableCell>
-                  <TableCell className={p.margem < 0 ? "text-destructive" : undefined}>
+                  <TableCell className="text-right">{p.quantidade}</TableCell>
+                  <TableCell className="text-right">{formatCurrencyBRL(p.faturamento)}</TableCell>
+                  <TableCell className={cn("text-right", p.margem < 0 && "text-destructive")}>
                     {formatCurrencyBRL(p.margem)}
                   </TableCell>
-                  <TableCell>{formatPercent(p.margemPct)}</TableCell>
-                  <TableCell className="text-muted-foreground">{formatPercent(p.cumulativoPct)}</TableCell>
+                  <TableCell className="text-right">{formatPercent(p.margemPct)}</TableCell>
+                  <TableCell className="text-muted-foreground text-right">
+                    {formatPercent(p.cumulativoPct)}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

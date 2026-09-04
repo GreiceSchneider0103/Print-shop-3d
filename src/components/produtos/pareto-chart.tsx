@@ -36,6 +36,11 @@ export function ParetoChart({ data }: { data: ProductAnalysis[] }) {
             tick={{ fontSize: 12 }}
             tickFormatter={(v: number) => formatCurrencyBRL(v)}
             width={90}
+            // Sempre inclui o zero no eixo — sem isso, quando todos os produtos
+            // têm margem negativa, o gráfico auto-escala só entre os valores
+            // negativos e as barras parecem crescer "pra cima" de forma
+            // enganosa, em vez de descer a partir de zero.
+            domain={([dataMin, dataMax]: readonly [number, number]) => [Math.min(0, dataMin), Math.max(0, dataMax)]}
           />
           <YAxis
             yAxisId="pct"
