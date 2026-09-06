@@ -6,6 +6,13 @@ import { normalizeHeader } from "./parsers";
 // Reutiliza o mesmo client JWT entre chamadas (inclusive entre execuções,
 // se o container do Vercel ficar "quente") — a lib renova o token sozinha
 // quando expira, então não há motivo pra reautenticar a cada aba.
+//
+// Escopo de leitura E escrita: a esteira de Produção precisa marcar a
+// caixinha "produzido" na planilha quando o item é postado no Kanban do
+// app (ver `mark-production-done.ts`). Isso só funciona se a planilha
+// também estiver compartilhada com a service account como Editor — só
+// Leitor (o padrão documentado no README) deixa a leitura funcionando
+// normalmente, mas a escrita falha com 403; quem chama trata esse erro.
 let cachedAuth: InstanceType<typeof google.auth.JWT> | null = null;
 
 function getAuth() {
@@ -14,10 +21,14 @@ function getAuth() {
     cachedAuth = new google.auth.JWT({
       email: clientEmail,
       key: privateKey,
-      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     });
   }
   return cachedAuth;
+}
+
+export function getSheetsClient() {
+  return google.sheets({ version: "v4", auth: getAuth() });
 }
 
 /**
@@ -133,8 +144,7 @@ export async function prefetchTabs(tabNames: string[]): Promise<void> {
   const uniqueTabs = Array.from(new Set(tabNames));
   if (uniqueTabs.length === 0) return;
 
-  const auth = getAuth();
-  const sheets = google.sheets({ version: "v4", auth });
+  const sheets = getSheetsClient();
 
   const { data } = await sheets.spreadsheets.values.batchGet({
     spreadsheetId: getSpreadsheetId(),
@@ -172,8 +182,7 @@ export async function readSheetTab(
   let values = tabCache.get(tabName);
 
   if (!values) {
-    const auth = getAuth();
-    const sheets = google.sheets({ version: "v4", auth });
+    const sheets = getSheetsClient();
 
     const { data } = await sheets.spreadsheets.values.get({
       spreadsheetId: getSpreadsheetId(),

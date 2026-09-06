@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 
 import { db } from "@/lib/db";
-import type { ProductionStatus } from "@prisma/client";
+import type { ProductionQueueItem, ProductionStatus } from "@prisma/client";
+
+import { markProducedInSheet } from "@/lib/sync/mark-production-done";
 
 export type MoveResult = { warnings: string[] };
 
@@ -13,12 +15,19 @@ export type MoveResult = { warnings: string[] };
  * filamento da ficha técnica do SKU (match por nome, case-insensitive).
  * `estoqueBaixado` evita baixar duas vezes se o item for movido de volta
  * e pra PRODUZIDO de novo.
+ *
+ * Ao chegar em POSTADO, marca a caixinha "produzido" na planilha (fora da
+ * transação — é uma chamada de rede à API do Sheets, não deve travar o
+ * banco enquanto espera). Falha aí não desfaz o card no Kanban, só volta
+ * como aviso: a marcação na planilha é best-effort e depende da service
+ * account ter permissão de Editor lá (ver `mark-production-done.ts`).
  */
 export async function moveProductionItem(id: number, status: ProductionStatus): Promise<MoveResult> {
   const warnings: string[] = [];
+  let item: ProductionQueueItem | undefined;
 
   await db.$transaction(async (tx) => {
-    const item = await tx.productionQueueItem.findUniqueOrThrow({ where: { id } });
+    item = await tx.productionQueueItem.findUniqueOrThrow({ where: { id } });
 
     if (status === "PRODUZIDO" && !item.estoqueBaixado) {
       const recipe = await tx.productRecipe.findMany({ where: { sku: item.sku } });
@@ -55,6 +64,21 @@ export async function moveProductionItem(id: number, status: ProductionStatus): 
       await tx.productionQueueItem.update({ where: { id }, data: { status } });
     }
   });
+
+  if (status === "POSTADO" && item) {
+    try {
+      const marked = await markProducedInSheet(item.pedido, item.sku);
+      if (!marked) {
+        warnings.push(
+          `Não encontrei o pedido ${item.pedido} na aba de produção da planilha pra marcar como produzido.`,
+        );
+      }
+    } catch (error) {
+      warnings.push(
+        `Não consegui marcar a caixinha na planilha (${error instanceof Error ? error.message : String(error)}). Confira se a conta de serviço tem permissão de Editor na planilha.`,
+      );
+    }
+  }
 
   revalidatePath("/producao");
   revalidatePath("/estoque");

@@ -10,7 +10,7 @@ export const SHEET_TABS = {
   fixedCosts: process.env.SHEET_TAB_FIXED_COSTS || "Fixos",
   operationConfig: process.env.SHEET_TAB_OPERATION_CONFIG || "Config Operação",
   deadlines: process.env.SHEET_TAB_DEADLINES || "Prazos",
-  production: process.env.SHEET_TAB_PRODUCTION || "Produção (1)",
+  production: process.env.SHEET_TAB_PRODUCTION || "Produção (2)",
 } as const;
 
 export function getSpreadsheetId(): string {

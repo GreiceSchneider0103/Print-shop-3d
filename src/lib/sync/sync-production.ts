@@ -20,7 +20,7 @@ function parseBoolean(value: string | undefined): boolean {
  * coluna pela posição (logo depois de "Canal", confirmado na planilha
  * real) — resistente a qualquer texto que apareça no cabeçalho dela.
  */
-function findProduzidoColumnIndex(headers: string[]): number {
+export function findProduzidoColumnIndex(headers: string[]): number {
   const canalIndex = headers.findIndex((h) => normalizeHeader(h).includes("canal"));
   return canalIndex >= 0 ? canalIndex + 1 : -1;
 }
@@ -31,6 +31,13 @@ function findProduzidoColumnIndex(headers: string[]): number {
  * precisam entrar no Kanban. Usa (pedido, sku) como chave natural pra
  * fazer upsert sem nunca sobrescrever `status`/`estoqueBaixado`, que a
  * partir da primeira importação passam a ser controlados só pelo Kanban.
+ *
+ * Quando a caixinha é marcada TRUE direto na planilha (em vez de mover o
+ * card até "Postado" no Kanban), o item correspondente é removido da fila
+ * — é assim que "marcar na planilha" também tira o item do sistema. O
+ * caminho inverso (mover até "Postado" no app marca a caixinha na
+ * planilha) fica em `mark-production-done.ts`, chamado pela action de
+ * mover item do Kanban.
  */
 export async function syncProduction() {
   const { headers, rows } = await readSheetTab(SHEET_TABS.production, "pedido");
@@ -48,6 +55,7 @@ export async function syncProduction() {
       data: { cliente: string | null; produto: string; quantidade: number; prazoPostagem: Date | null; canal: string };
     }
   >();
+  const checkedKeys: { pedido: string; sku: string }[] = [];
 
   for (const row of rows) {
     const r = buildRowLookup(row);
@@ -63,7 +71,8 @@ export async function syncProduction() {
 
     const produzidoRaw = produzidoIndex >= 0 ? Object.values(row)[produzidoIndex] : undefined;
     if (parseBoolean(produzidoRaw)) {
-      // Já produzido na planilha — histórico, não entra na fila.
+      // Marcado como produzido na planilha — sai (ou nunca entra) da fila.
+      checkedKeys.push({ pedido, sku });
       continue;
     }
 
@@ -89,6 +98,12 @@ export async function syncProduction() {
       update: data,
     }),
   );
+
+  if (checkedKeys.length > 0) {
+    await db.productionQueueItem.deleteMany({
+      where: { OR: checkedKeys.map(({ pedido, sku }) => ({ pedido, sku })) },
+    });
+  }
 
   return { processed: validItems.length, skipped, total: rows.length };
 }

@@ -7,6 +7,33 @@ import { db } from "@/lib/db";
 export type RecipeEntryInput = { filamento: string; gramas: number };
 
 /**
+ * Cadastro manual de produto — agora que a ficha técnica não vem mais da
+ * planilha (CMV), é o único jeito de dar de alta um SKU novo no sistema.
+ * Custo unitário e tempo de produção começam zerados/vazios e são
+ * ajustados depois direto na linha, junto com os filamentos.
+ */
+export async function createProduct(formData: FormData) {
+  const sku = String(formData.get("sku") ?? "").trim();
+  const produto = String(formData.get("produto") ?? "").trim();
+  const tempoProducaoMinRaw = String(formData.get("tempoProducaoMin") ?? "").trim();
+
+  if (!sku || !produto) {
+    throw new Error("SKU e Produto são obrigatórios.");
+  }
+
+  await db.product.create({
+    data: {
+      sku,
+      produto,
+      custoUnitario: 0,
+      tempoProducaoMin: tempoProducaoMinRaw ? Number(tempoProducaoMinRaw) || null : null,
+    },
+  });
+
+  revalidatePath("/ficha-tecnica");
+}
+
+/**
  * Substitui a ficha técnica inteira de um SKU pelas entradas recebidas —
  * mesma lógica de "delete o que sobrou, upsert o resto" que o job de sync
  * usa, então editar na mão e sincronizar depois não deixam lixo pra trás.

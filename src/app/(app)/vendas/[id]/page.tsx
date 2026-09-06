@@ -25,7 +25,6 @@ export default async function OrderDetailPage({
   const rows: [string, string][] = [
     ["Valor total", formatCurrencyBRL(order.valorTotal.toString())],
     ["Comissão", `- ${formatCurrencyBRL(order.comissao.toString())}`],
-    ["Frete cliente", `- ${formatCurrencyBRL(order.freteCliente.toString())}`],
     ["Frete empresa", `- ${formatCurrencyBRL(order.freteEmpresa.toString())}`],
     ["CMV", `- ${formatCurrencyBRL(cmv)}${product ? "" : " (SKU não cadastrado)"}`],
     ["Margem", formatCurrencyBRL(margem)],
@@ -91,6 +90,13 @@ export default async function OrderDetailPage({
             <span>Margem %</span>
             <span>{(margemPct * 100).toFixed(1)}%</span>
           </div>
+          {Number(order.freteCliente) > 0 && (
+            <p className="text-muted-foreground border-t pt-2 text-xs">
+              Frete pago pelo cliente: {formatCurrencyBRL(order.freteCliente.toString())} — cobrado à parte do
+              valor do pedido e repassado direto ao parceiro logístico pela plataforma; não entra no faturamento
+              nem reduz a margem.
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>

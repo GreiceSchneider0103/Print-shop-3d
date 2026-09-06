@@ -57,12 +57,16 @@ Para gerenciar como migrations versionadas em vez de `db push`, use
 1. No [Google Cloud Console](https://console.cloud.google.com), crie uma
    service account e uma chave JSON, com a Google Sheets API habilitada.
 2. Compartilhe a planilha "Controle Financeiro 3D" com o e-mail da service
-   account (permissão de leitura/Viewer).
+   account com permissão de **Editor** (não só Leitor/Viewer) — a esteira
+   de Produção precisa gravar na planilha, além de ler (ver
+   `src/lib/sync/mark-production-done.ts`). Só leitura funciona para todo
+   o resto da sincronização, mas a marcação automática da caixinha
+   "produzido" falha silenciosamente (vira aviso no Kanban) sem Editor.
 3. Preencha no `.env.local`: `GOOGLE_SHEETS_SPREADSHEET_ID`,
    `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`.
 4. Os nomes das abas assumidos por padrão estão em
-   `src/lib/sync/config.ts` (Vendas, CMV, Ficha Técnica, Taxas, Fixos,
-   Config Operação, Prazos) — ajuste ali ou via variáveis de ambiente
+   `src/lib/sync/config.ts` (Vendas, CMV, Taxas, Fixos, Config Operação,
+   Prazos, Produção (2)) — ajuste ali ou via variáveis de ambiente
    (`SHEET_TAB_*`) se os nomes reais da planilha forem diferentes.
 
 Rodar a sincronização localmente:
