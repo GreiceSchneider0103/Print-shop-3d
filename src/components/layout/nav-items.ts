@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Boxes,
+  Calculator,
   Factory,
   LayoutDashboard,
   LineChart,
@@ -14,6 +15,8 @@ export type NavItem = {
   href: string;
   label: string;
   icon: LucideIcon;
+  /** Abre em nova aba em vez de navegar internamente — ex.: o Flush (app de precificação), que é outro projeto. */
+  external?: boolean;
 };
 
 export type NavSection = {
@@ -46,6 +49,9 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     label: "Sistema",
-    items: [{ href: "/configuracoes", label: "Configurações", icon: Settings }],
+    items: [
+      { href: "/configuracoes", label: "Configurações", icon: Settings },
+      { href: "https://flush3-d.vercel.app/", label: "Flush — Precificação", icon: Calculator, external: true },
+    ],
   },
 ];
