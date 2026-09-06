@@ -176,9 +176,22 @@ enum InventoryItemType {
   OUTRO
 }
 
+// Filamento sempre foi tratado em gramas (compatível com a fórmula de
+// consumo da ficha técnica), mas insumos "Outro" podem ser vendidos e
+// contados por unidade ou por metro (ex.: etiquetas, fita) — daí este
+// campo controlar só o rótulo/formatação exibida, não a matemática:
+// os campos numéricos abaixo guardam a quantidade na unidade escolhida
+// aqui, e `custoPorKg` vira "custo por kg/unidade/metro" conforme o caso.
+enum MeasureUnit {
+  GRAMAS
+  UNIDADE
+  METROS
+}
+
 model InventoryItem {
   insumo         String            @id
   tipo           InventoryItemType @default(FILAMENTO)
+  unidadeMedida  MeasureUnit       @default(GRAMAS) @map("unidade_medida")
   estoqueAtualG  Decimal           @default(0) @map("estoque_atual_g") @db.Decimal(12, 2)
   estoqueMinimoG Decimal           @default(0) @map("estoque_minimo_g") @db.Decimal(12, 2)
   custoPorKg     Decimal           @map("custo_por_kg") @db.Decimal(12, 2)

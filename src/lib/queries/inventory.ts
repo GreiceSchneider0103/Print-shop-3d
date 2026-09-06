@@ -1,7 +1,11 @@
+import type { MeasureUnit } from "@prisma/client";
+
 import { db } from "@/lib/db";
+import { estimateCost } from "@/lib/measure-unit";
 
 export type PurchaseNeed = {
   insumo: string;
+  unidadeMedida: MeasureUnit;
   estoqueAtualG: number;
   estoqueMinimoG: number;
   necessidadeProducaoG: number;
@@ -63,12 +67,13 @@ export async function getPurchaseNeeds(): Promise<{
 
     return {
       insumo: item.insumo,
+      unidadeMedida: item.unidadeMedida,
       estoqueAtualG,
       estoqueMinimoG,
       necessidadeProducaoG,
       necessidadeCompraG,
       custoPorKg,
-      custoCompraEstimado: (necessidadeCompraG / 1000) * custoPorKg,
+      custoCompraEstimado: estimateCost(necessidadeCompraG, custoPorKg, item.unidadeMedida),
       fornecedor: item.fornecedor,
     };
   });

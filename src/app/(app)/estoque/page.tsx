@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { db } from "@/lib/db";
 import { formatCurrencyBRL, formatDateTime } from "@/lib/format";
+import { costSuffix, formatQuantity } from "@/lib/measure-unit";
 import { getPurchaseNeeds } from "@/lib/queries/inventory";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ export default async function EstoquePage() {
   ]);
 
   const purchaseRows = needs.filter((n) => n.necessidadeCompraG > 0);
+  const unitByInsumo = new Map(items.map((item) => [item.insumo, item.unidadeMedida]));
 
   return (
     <div className="flex flex-col gap-5">
@@ -66,7 +68,7 @@ export default async function EstoquePage() {
                   <TableHead>Tipo</TableHead>
                   <TableHead>Estoque atual</TableHead>
                   <TableHead>Estoque mínimo</TableHead>
-                  <TableHead>Custo/kg</TableHead>
+                  <TableHead>Custo</TableHead>
                   <TableHead>Fornecedor</TableHead>
                   <TableHead>Atualizado em</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -91,18 +93,31 @@ export default async function EstoquePage() {
                       </TableCell>
                       <TableCell className="text-muted-foreground">{item.tipo}</TableCell>
                       <TableCell className={cn(low && "text-destructive font-medium")}>
-                        {Number(item.estoqueAtualG).toLocaleString("pt-BR")} g
+                        {formatQuantity(Number(item.estoqueAtualG), item.unidadeMedida)}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {Number(item.estoqueMinimoG).toLocaleString("pt-BR")} g
+                        {formatQuantity(Number(item.estoqueMinimoG), item.unidadeMedida)}
                       </TableCell>
-                      <TableCell>{formatCurrencyBRL(item.custoPorKg.toString())}</TableCell>
+                      <TableCell>
+                        {formatCurrencyBRL(item.custoPorKg.toString())}
+                        {costSuffix(item.unidadeMedida)}
+                      </TableCell>
                       <TableCell>{item.fornecedor ?? "—"}</TableCell>
                       <TableCell className="text-muted-foreground">{formatDateTime(item.atualizadoEm)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <MovementButton insumo={item.insumo} />
-                          <EditInventoryItemButton item={item} />
+                          <MovementButton insumo={item.insumo} unidadeMedida={item.unidadeMedida} />
+                          <EditInventoryItemButton
+                            item={{
+                              insumo: item.insumo,
+                              tipo: item.tipo,
+                              unidadeMedida: item.unidadeMedida,
+                              estoqueAtualG: Number(item.estoqueAtualG),
+                              estoqueMinimoG: Number(item.estoqueMinimoG),
+                              custoPorKg: Number(item.custoPorKg),
+                              fornecedor: item.fornecedor,
+                            }}
+                          />
                           <DeleteRowButton
                             action={deleteInventoryItem.bind(null, item.insumo)}
                             confirmMessage={`Excluir o insumo ${item.insumo}? O histórico de movimentações também será apagado.`}
@@ -141,10 +156,10 @@ export default async function EstoquePage() {
                 {purchaseRows.map((n) => (
                   <TableRow key={n.insumo}>
                     <TableCell className="font-medium">{n.insumo}</TableCell>
-                    <TableCell>{n.estoqueAtualG.toLocaleString("pt-BR")} g</TableCell>
-                    <TableCell>{n.necessidadeProducaoG.toLocaleString("pt-BR")} g</TableCell>
+                    <TableCell>{formatQuantity(n.estoqueAtualG, n.unidadeMedida)}</TableCell>
+                    <TableCell>{formatQuantity(n.necessidadeProducaoG, n.unidadeMedida)}</TableCell>
                     <TableCell className="text-destructive font-medium">
-                      {n.necessidadeCompraG.toLocaleString("pt-BR")} g
+                      {formatQuantity(n.necessidadeCompraG, n.unidadeMedida)}
                     </TableCell>
                     <TableCell>{formatCurrencyBRL(n.custoCompraEstimado)}</TableCell>
                     <TableCell>{n.fornecedor ?? "—"}</TableCell>
@@ -200,7 +215,7 @@ export default async function EstoquePage() {
                         {MOVEMENT_LABEL[m.tipo]}
                       </Badge>
                     </TableCell>
-                    <TableCell>{Number(m.quantidade).toLocaleString("pt-BR")} g</TableCell>
+                    <TableCell>{formatQuantity(Number(m.quantidade), unitByInsumo.get(m.insumo) ?? "GRAMAS")}</TableCell>
                     <TableCell className="text-muted-foreground">{m.motivo ?? "—"}</TableCell>
                     <TableCell className="text-muted-foreground">{m.pedidoRelacionado ?? "—"}</TableCell>
                   </TableRow>

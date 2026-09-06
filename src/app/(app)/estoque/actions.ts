@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { db } from "@/lib/db";
-import type { InventoryItemType, InventoryMovementType } from "@prisma/client";
+import type { InventoryItemType, InventoryMovementType, MeasureUnit } from "@prisma/client";
 
 function num(formData: FormData, key: string): number {
   return Number(formData.get(key) ?? 0) || 0;
@@ -24,6 +24,7 @@ export async function saveInventoryItem(formData: FormData) {
   // a chave com string vazia.
   const data = {
     tipo: str(formData, "tipo") as InventoryItemType,
+    unidadeMedida: str(formData, "unidadeMedida") as MeasureUnit,
     estoqueAtualG: num(formData, "estoqueAtualG"),
     estoqueMinimoG: num(formData, "estoqueMinimoG"),
     custoPorKg: num(formData, "custoPorKg"),

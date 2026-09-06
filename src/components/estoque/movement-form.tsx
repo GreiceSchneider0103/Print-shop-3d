@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRightLeftIcon } from "lucide-react";
+import type { MeasureUnit } from "@prisma/client";
 
 import { saveInventoryMovement } from "@/app/(app)/estoque/actions";
 import { FormDialog } from "@/components/configuracoes/form-dialog";
@@ -8,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { unitSuffix } from "@/lib/measure-unit";
 
-export function MovementButton({ insumo }: { insumo: string }) {
+export function MovementButton({ insumo, unidadeMedida }: { insumo: string; unidadeMedida: MeasureUnit }) {
   return (
     <FormDialog
       trigger={
@@ -36,7 +38,7 @@ export function MovementButton({ insumo }: { insumo: string }) {
         </Select>
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="quantidade">Quantidade (g)</Label>
+        <Label htmlFor="quantidade">Quantidade ({unitSuffix(unidadeMedida)})</Label>
         <Input id="quantidade" name="quantidade" type="number" step="0.01" required />
       </div>
       <div className="flex flex-col gap-1.5">
