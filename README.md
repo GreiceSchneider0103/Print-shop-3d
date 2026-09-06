@@ -59,15 +59,17 @@ Para gerenciar como migrations versionadas em vez de `db push`, use
 2. Compartilhe a planilha "Controle Financeiro 3D" com o e-mail da service
    account com permissão de **Editor** (não só Leitor/Viewer) — a esteira
    de Produção precisa gravar na planilha, além de ler (ver
-   `src/lib/sync/mark-production-done.ts`). Só leitura funciona para todo
-   o resto da sincronização, mas a marcação automática da caixinha
-   "produzido" falha silenciosamente (vira aviso no Kanban) sem Editor.
+   `src/lib/sync/mark-production-done.ts`). Só leitura funciona pra
+   sincronizar Vendas, mas a marcação automática da caixinha "produzido"
+   falha silenciosamente (vira aviso no Kanban) sem Editor.
 3. Preencha no `.env.local`: `GOOGLE_SHEETS_SPREADSHEET_ID`,
    `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`.
 4. Os nomes das abas assumidos por padrão estão em
-   `src/lib/sync/config.ts` (Vendas, CMV, Taxas, Fixos, Config Operação,
-   Prazos, Produção (2)) — ajuste ali ou via variáveis de ambiente
-   (`SHEET_TAB_*`) se os nomes reais da planilha forem diferentes.
+   `src/lib/sync/config.ts` (Vendas, Produção (2)) — ajuste ali ou via
+   variáveis de ambiente (`SHEET_TAB_*`) se os nomes reais da planilha
+   forem diferentes. Só essas duas abas ainda sincronizam automaticamente
+   — CMV, Taxas, Custos Fixos, Config Operação, Prazos e a Ficha Técnica
+   (filamentos) são cadastro manual no app (ver `src/lib/sync/run.ts`).
 
 Rodar a sincronização localmente:
 

@@ -3,12 +3,8 @@ import { SyncStatus } from "@prisma/client";
 
 import { SHEET_TABS } from "./config";
 import { prefetchTabs } from "./sheets-client";
-import { syncChannelFees } from "./sync-channel-fees";
-import { syncDeadlines } from "./sync-deadlines";
-import { syncOperationConfig } from "./sync-operation-config";
 import { syncOrders } from "./sync-orders";
 import { syncProduction } from "./sync-production";
-import { syncProducts } from "./sync-products";
 
 type SyncResult = { processed: number; skipped: number; total: number };
 
@@ -17,20 +13,16 @@ type SyncStep = {
   run: () => Promise<SyncResult>;
 };
 
-// Ordem importa: orders pode ser independente. As demais são tabelas de
-// configuração simples.
-//
-// Ficha Técnica (product_recipe) e Custos Fixos saíram do pipeline: os
-// dois já têm CRUD manual completo no app (/ficha-tecnica e
-// /configuracoes → Custos Fixos) e sincronizar de novo sobrescreveria o
-// que for editado manualmente.
+// Só Vendas e Produção ainda sincronizam automaticamente. Ficha Técnica
+// (product_recipe), CMV (produto/custo/tempo/preços), Custos Fixos, Taxas
+// por canal, Config Operação e Prazos saíram do pipeline: todos já têm
+// CRUD manual completo no app (/ficha-tecnica e as abas de
+// /configuracoes) e sincronizar de novo sobrescreveria o que for editado
+// manualmente. Os dados já importados continuam no banco — só a
+// sincronização automática desses seis parou.
 const STEPS: SyncStep[] = [
-  { tab: SHEET_TABS.products, run: syncProducts },
   { tab: SHEET_TABS.orders, run: syncOrders },
   { tab: SHEET_TABS.production, run: syncProduction },
-  { tab: SHEET_TABS.channelFees, run: syncChannelFees },
-  { tab: SHEET_TABS.operationConfig, run: syncOperationConfig },
-  { tab: SHEET_TABS.deadlines, run: syncDeadlines },
 ];
 
 export type SyncSummary = {

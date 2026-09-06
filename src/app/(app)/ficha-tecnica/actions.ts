@@ -39,6 +39,15 @@ export type ProductUpdateInput = {
   recipe: RecipeEntryInput[];
 };
 
+/**
+ * Igual a `ProductUpdateInput`, com o nome do produto — usado só pra
+ * salvar uma linha específica (`updateProduct`), nunca pra aplicar em
+ * massa (`applyProductToGroup`): variações do mesmo produto têm nomes
+ * diferentes entre si (cor/opção), copiar o nome pras outras apagaria
+ * essa diferença.
+ */
+export type SingleProductUpdateInput = ProductUpdateInput & { produto: string };
+
 function normalizeRecipe(entries: RecipeEntryInput[]) {
   return entries
     .map((e) => ({ filamento: e.filamento.trim(), gramas: e.gramas }))
@@ -46,18 +55,19 @@ function normalizeRecipe(entries: RecipeEntryInput[]) {
 }
 
 /**
- * Substitui custo unitário, tempo de produção e a ficha técnica inteira
- * (filamentos) de um SKU — mesma lógica de "delete o que sobrou, upsert o
- * resto" pros filamentos que o job de sync usava, agora só disponível pela
- * edição em linha já que a Ficha Técnica não vem mais da planilha.
+ * Substitui nome, custo unitário, tempo de produção e a ficha técnica
+ * inteira (filamentos) de um SKU — mesma lógica de "delete o que sobrou,
+ * upsert o resto" pros filamentos que o job de sync usava, agora só
+ * disponível pela edição em linha já que nem a Ficha Técnica nem o CMV
+ * vêm mais da planilha.
  */
-export async function updateProduct(sku: string, input: ProductUpdateInput) {
+export async function updateProduct(sku: string, input: SingleProductUpdateInput) {
   const valid = normalizeRecipe(input.recipe);
 
   await db.$transaction([
     db.product.update({
       where: { sku },
-      data: { custoUnitario: input.custoUnitario, tempoProducaoMin: input.tempoProducaoMin },
+      data: { produto: input.produto, custoUnitario: input.custoUnitario, tempoProducaoMin: input.tempoProducaoMin },
     }),
     db.productRecipe.deleteMany({ where: { sku } }),
     ...valid.map((entry, index) =>

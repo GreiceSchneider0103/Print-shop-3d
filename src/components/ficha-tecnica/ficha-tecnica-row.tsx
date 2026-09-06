@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { filamentColorClass } from "@/lib/filament-color";
-import { truncateWords } from "@/lib/format";
 
 type Entry = { filamento: string; gramas: string };
 
@@ -45,6 +44,7 @@ function toEntries(recipe: FichaTecnicaProduct["recipe"]): Entry[] {
  */
 export function FichaTecnicaRow({ product, groupSkus = [] }: { product: FichaTecnicaProduct; groupSkus?: string[] }) {
   const [entries, setEntries] = useState<Entry[]>(() => toEntries(product.recipe));
+  const [produto, setProduto] = useState(product.produto);
   const [custoUnitario, setCustoUnitario] = useState(String(product.custoUnitario));
   const [tempoProducaoMin, setTempoProducaoMin] = useState(String(product.tempoProducaoMin ?? ""));
   const [dirty, setDirty] = useState(false);
@@ -66,7 +66,8 @@ export function FichaTecnicaRow({ product, groupSkus = [] }: { product: FichaTec
     setDirty(true);
   }
 
-  function buildInput() {
+  /** Custo, tempo e filamentos — os únicos campos que fazem sentido copiar pras outras variações do grupo (nome não, cada variação tem o seu). */
+  function buildGroupInput() {
     return {
       custoUnitario: Number(custoUnitario.replace(",", ".")) || 0,
       tempoProducaoMin: tempoProducaoMin.trim() ? Number(tempoProducaoMin) || null : null,
@@ -80,7 +81,7 @@ export function FichaTecnicaRow({ product, groupSkus = [] }: { product: FichaTec
   function handleSave() {
     startTransition(async () => {
       try {
-        await updateProduct(product.sku, buildInput());
+        await updateProduct(product.sku, { ...buildGroupInput(), produto });
         toast.success(`Ficha técnica de ${product.sku} salva.`);
         setDirty(false);
       } catch (error) {
@@ -94,7 +95,7 @@ export function FichaTecnicaRow({ product, groupSkus = [] }: { product: FichaTec
   function handleApplyToGroup() {
     startApplyToGroup(async () => {
       try {
-        await applyProductToGroup([product.sku, ...groupSkus], buildInput());
+        await applyProductToGroup([product.sku, ...groupSkus], buildGroupInput());
         toast.success(`Custo, tempo e filamentos aplicados às ${groupSkus.length + 1} variações do grupo.`);
         setDirty(false);
       } catch (error) {
@@ -108,8 +109,16 @@ export function FichaTecnicaRow({ product, groupSkus = [] }: { product: FichaTec
   return (
     <TableRow>
       <TableCell className="align-top font-mono text-xs">{product.sku}</TableCell>
-      <TableCell className="max-w-[280px] align-top text-sm font-medium whitespace-normal" title={product.produto}>
-        {product.produto ? truncateWords(product.produto, 4) : "—"}
+      <TableCell className="align-top">
+        <Input
+          value={produto}
+          onChange={(e) => {
+            setProduto(e.target.value);
+            setDirty(true);
+          }}
+          placeholder="Nome do produto"
+          className="h-8 w-52 text-sm font-medium"
+        />
       </TableCell>
       <TableCell className="align-top">
         <div className="flex min-w-[280px] flex-col gap-1.5">

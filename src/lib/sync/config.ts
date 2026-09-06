@@ -2,13 +2,15 @@
  * Nomes das abas da planilha "Controle Financeiro 3D" e variáveis de
  * ambiente do job de sincronização. Confirmados direto via
  * `spreadsheets.get` na planilha real (não são só suposição do escopo).
+ *
+ * Só Vendas e Produção ainda sincronizam automaticamente — CMV, Taxas,
+ * Custos Fixos, Config Operação e Prazos (e a Ficha Técnica/filamentos, à
+ * parte) viraram cadastro manual no app, cada um com CRUD completo em
+ * Configurações ou Ficha Técnica. Os dados já importados continuam no
+ * banco normalmente; só a sincronização automática parou.
  */
 export const SHEET_TABS = {
   orders: process.env.SHEET_TAB_ORDERS || "Vendas",
-  products: process.env.SHEET_TAB_PRODUCTS || "CMV",
-  channelFees: process.env.SHEET_TAB_FEES || "Taxas",
-  operationConfig: process.env.SHEET_TAB_OPERATION_CONFIG || "Config Operação",
-  deadlines: process.env.SHEET_TAB_DEADLINES || "Prazos",
   production: process.env.SHEET_TAB_PRODUCTION || "Produção (2)",
 } as const;
 

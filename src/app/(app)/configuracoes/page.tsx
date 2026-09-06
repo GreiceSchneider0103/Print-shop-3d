@@ -46,7 +46,7 @@ export default async function ConfiguracoesPage() {
       <PageHeader
         icon={SettingsIcon}
         title="Configurações"
-        description="Dados vêm da sincronização com o Google Sheets, mas também podem ser editados aqui."
+        description="Cadastro manual — só Vendas e Produção ainda sincronizam com o Google Sheets."
         actions={<SyncNowButton />}
       />
 
