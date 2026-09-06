@@ -10,9 +10,15 @@ import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-/** Código-base do produto (antes do primeiro "-") — variações de cor/opção do mesmo produto compartilham esse prefixo. */
+/**
+ * Código-base do produto — os dígitos no início do SKU. Variações de
+ * cor/opção do mesmo produto compartilham esse prefixo, mas nem sempre com
+ * separador consistente na planilha original (`0007-Branco com Dourado`,
+ * mas também `0002Branco`/`0002Preto` e `0003a`/`0003b`) — por isso pega só
+ * os dígitos, não corta no primeiro "-".
+ */
 function groupKey(sku: string): string {
-  return sku.split("-")[0] || sku;
+  return sku.match(/^\d+/)?.[0] || sku;
 }
 
 export default async function FichaTecnicaPage() {
@@ -39,7 +45,16 @@ export default async function FichaTecnicaPage() {
     if (group) group.push(product);
     else groups.set(key, [product]);
   }
-  const sortedGroups = Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
+
+  // Grupos de verdade (mais de uma variação) primeiro, SKUs avulsos depois
+  // — senão um SKU sem grupo intercalado alfabeticamente quebra a leitura
+  // visual dos grupos.
+  const byKeyAsc = ([a]: [string, FichaTecnicaProduct[]], [b]: [string, FichaTecnicaProduct[]]) => a.localeCompare(b);
+  const entries = Array.from(groups.entries());
+  const sortedGroups = [
+    ...entries.filter(([, group]) => group.length > 1).sort(byKeyAsc),
+    ...entries.filter(([, group]) => group.length === 1).sort(byKeyAsc),
+  ];
 
   return (
     <div className="flex flex-col gap-5">

@@ -15,7 +15,7 @@ export function FichaTecnicaGroup({
   produto: string;
   products: FichaTecnicaProduct[];
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
 
   return (
     <>
