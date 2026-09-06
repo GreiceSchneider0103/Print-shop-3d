@@ -33,17 +33,32 @@ export async function createProduct(formData: FormData) {
   revalidatePath("/ficha-tecnica");
 }
 
-/**
- * Substitui a ficha técnica inteira de um SKU pelas entradas recebidas —
- * mesma lógica de "delete o que sobrou, upsert o resto" que o job de sync
- * usa, então editar na mão e sincronizar depois não deixam lixo pra trás.
- */
-export async function updateProductRecipe(sku: string, entries: RecipeEntryInput[]) {
-  const valid = entries
+export type ProductUpdateInput = {
+  custoUnitario: number;
+  tempoProducaoMin: number | null;
+  recipe: RecipeEntryInput[];
+};
+
+function normalizeRecipe(entries: RecipeEntryInput[]) {
+  return entries
     .map((e) => ({ filamento: e.filamento.trim(), gramas: e.gramas }))
     .filter((e) => e.filamento !== "" && Number.isFinite(e.gramas) && e.gramas > 0);
+}
+
+/**
+ * Substitui custo unitário, tempo de produção e a ficha técnica inteira
+ * (filamentos) de um SKU — mesma lógica de "delete o que sobrou, upsert o
+ * resto" pros filamentos que o job de sync usava, agora só disponível pela
+ * edição em linha já que a Ficha Técnica não vem mais da planilha.
+ */
+export async function updateProduct(sku: string, input: ProductUpdateInput) {
+  const valid = normalizeRecipe(input.recipe);
 
   await db.$transaction([
+    db.product.update({
+      where: { sku },
+      data: { custoUnitario: input.custoUnitario, tempoProducaoMin: input.tempoProducaoMin },
+    }),
     db.productRecipe.deleteMany({ where: { sku } }),
     ...valid.map((entry, index) =>
       db.productRecipe.create({
@@ -51,6 +66,32 @@ export async function updateProductRecipe(sku: string, entries: RecipeEntryInput
       }),
     ),
   ]);
+
+  revalidatePath("/ficha-tecnica");
+}
+
+/**
+ * Aplica o mesmo custo unitário, tempo de produção e filamentos pra todos
+ * os SKUs do grupo de uma vez — útil quando as variações (cor, opção) do
+ * mesmo produto usam a mesma receita e só o SKU/nome muda.
+ */
+export async function applyProductToGroup(skus: string[], input: ProductUpdateInput) {
+  const valid = normalizeRecipe(input.recipe);
+
+  await db.$transaction(
+    skus.flatMap((sku) => [
+      db.product.update({
+        where: { sku },
+        data: { custoUnitario: input.custoUnitario, tempoProducaoMin: input.tempoProducaoMin },
+      }),
+      db.productRecipe.deleteMany({ where: { sku } }),
+      ...valid.map((entry, index) =>
+        db.productRecipe.create({
+          data: { sku, ordem: index + 1, filamento: entry.filamento, gramas: entry.gramas },
+        }),
+      ),
+    ]),
+  );
 
   revalidatePath("/ficha-tecnica");
 }

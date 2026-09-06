@@ -22,6 +22,15 @@ function buildProductData(r: ReturnType<typeof buildRowLookup>) {
   };
 }
 
+/**
+ * `custoUnitario` e `tempoProducaoMin` agora também são editáveis direto na
+ * Ficha Técnica (junto com os filamentos) — se o sync continuasse
+ * sobrescrevendo os dois em toda sincronização, uma edição manual seria
+ * desfeita na próxima vez que alguém clicasse em "Sincronizar agora" ou o
+ * cron horário rodasse. Por isso só entram no `create` (SKU novo, vindo da
+ * planilha pela primeira vez, começa com uma estimativa em vez de zero) —
+ * o `update` de um SKU já existente nunca mexe nesses dois campos.
+ */
 export async function syncProducts() {
   const { rows } = await readSheetTab(SHEET_TABS.products, "sku");
 
@@ -45,9 +54,17 @@ export async function syncProducts() {
 
   const validProducts = Array.from(bySku.entries()).map(([sku, data]) => ({ sku, data }));
 
-  await mapWithConcurrency(validProducts, UPSERT_CONCURRENCY, ({ sku, data }) =>
-    db.product.upsert({ where: { sku }, create: { sku, ...data }, update: data }),
-  );
+  await mapWithConcurrency(validProducts, UPSERT_CONCURRENCY, ({ sku, data }) => {
+    const updateData = {
+      produto: data.produto,
+      tipoAnuncioMl: data.tipoAnuncioMl,
+      diasPreparoMl: data.diasPreparoMl,
+      precoMl: data.precoMl,
+      precoShopee: data.precoShopee,
+      precoTiktok: data.precoTiktok,
+    };
+    return db.product.upsert({ where: { sku }, create: { sku, ...data }, update: updateData });
+  });
 
   return { processed: validProducts.length, skipped, total: rows.length };
 }

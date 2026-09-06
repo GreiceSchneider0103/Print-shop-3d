@@ -1,11 +1,11 @@
-import { Fragment } from "react";
 import { WrenchIcon } from "lucide-react";
 
 import { EmptyState } from "@/components/empty-state";
 import { CreateProductButton } from "@/components/ficha-tecnica/create-product-button";
+import { FichaTecnicaGroup } from "@/components/ficha-tecnica/ficha-tecnica-group";
 import { FichaTecnicaRow, type FichaTecnicaProduct } from "@/components/ficha-tecnica/ficha-tecnica-row";
 import { PageHeader } from "@/components/page-header";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +29,7 @@ export default async function FichaTecnicaPage() {
     custoUnitario: Number(p.custoUnitario),
     tempoProducaoMin: p.tempoProducaoMin,
     recipe: p.recipe.map((r) => ({ filamento: r.filamento, gramas: Number(r.gramas), ordem: r.ordem })),
+    atualizadoEm: p.atualizadoEm.getTime(),
   }));
 
   const groups = new Map<string, FichaTecnicaProduct[]>();
@@ -59,26 +60,19 @@ export default async function FichaTecnicaPage() {
                 <TableHead>SKU</TableHead>
                 <TableHead>Produto</TableHead>
                 <TableHead>Filamentos</TableHead>
-                <TableHead>Custo unitário cadastrado</TableHead>
+                <TableHead>Custo unitário</TableHead>
                 <TableHead>Tempo de produção</TableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedGroups.map(([key, group]) => (
-                <Fragment key={key}>
-                  {group.length > 1 && (
-                    <TableRow className="bg-muted/40 hover:bg-muted/40">
-                      <TableCell colSpan={6} className="text-muted-foreground py-1.5 text-xs font-semibold">
-                        {key} — {group[0].produto}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {group.map((product) => (
-                    <FichaTecnicaRow key={product.sku} product={product} />
-                  ))}
-                </Fragment>
-              ))}
+              {sortedGroups.map(([key, group]) =>
+                group.length > 1 ? (
+                  <FichaTecnicaGroup key={key} groupKey={key} produto={group[0].produto} products={group} />
+                ) : (
+                  <FichaTecnicaRow key={`${group[0].sku}:${group[0].atualizadoEm}`} product={group[0]} />
+                ),
+              )}
             </TableBody>
           </Table>
         </div>

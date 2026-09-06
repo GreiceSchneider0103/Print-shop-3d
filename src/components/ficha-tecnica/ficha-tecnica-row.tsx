@@ -4,12 +4,12 @@ import { useState, useTransition } from "react";
 import { PlusIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
 
-import { updateProductRecipe } from "@/app/(app)/ficha-tecnica/actions";
+import { applyProductToGroup, updateProduct } from "@/app/(app)/ficha-tecnica/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { filamentColorClass } from "@/lib/filament-color";
-import { formatCurrencyBRL, truncateWords } from "@/lib/format";
+import { truncateWords } from "@/lib/format";
 
 type Entry = { filamento: string; gramas: string };
 
@@ -23,6 +23,12 @@ export type FichaTecnicaProduct = {
   custoUnitario: number;
   tempoProducaoMin: number | null;
   recipe: { filamento: string; gramas: number; ordem: number }[];
+  /** `Product.atualizadoEm` como timestamp — usado na `key` de fora pra forçar
+   * o React a remontar a linha (e descartar o estado local antigo) quando o
+   * dado muda por outro caminho, como "aplicar a todo o grupo" mexendo numa
+   * linha irmã. Sem isso, a linha irmã mantém os valores antigos no estado
+   * local mesmo depois do servidor confirmar a mudança. */
+  atualizadoEm: number;
 };
 
 function toEntries(recipe: FichaTecnicaProduct["recipe"]): Entry[] {
@@ -32,10 +38,18 @@ function toEntries(recipe: FichaTecnicaProduct["recipe"]): Entry[] {
     .map((r) => ({ filamento: r.filamento, gramas: String(r.gramas) }));
 }
 
-export function FichaTecnicaRow({ product }: { product: FichaTecnicaProduct }) {
+/**
+ * `groupSkus`: os outros SKUs do mesmo grupo (variações de cor/opção do
+ * mesmo produto) — quando presente, mostra o botão "Aplicar a todo o
+ * grupo" pra copiar custo, tempo e filamentos desta linha pras outras.
+ */
+export function FichaTecnicaRow({ product, groupSkus = [] }: { product: FichaTecnicaProduct; groupSkus?: string[] }) {
   const [entries, setEntries] = useState<Entry[]>(() => toEntries(product.recipe));
+  const [custoUnitario, setCustoUnitario] = useState(String(product.custoUnitario));
+  const [tempoProducaoMin, setTempoProducaoMin] = useState(String(product.tempoProducaoMin ?? ""));
   const [dirty, setDirty] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [isApplyingToGroup, startApplyToGroup] = useTransition();
 
   function updateEntry(index: number, field: keyof Entry, value: string) {
     setEntries((prev) => prev.map((e, i) => (i === index ? { ...e, [field]: value } : e)));
@@ -52,20 +66,39 @@ export function FichaTecnicaRow({ product }: { product: FichaTecnicaProduct }) {
     setDirty(true);
   }
 
+  function buildInput() {
+    return {
+      custoUnitario: Number(custoUnitario.replace(",", ".")) || 0,
+      tempoProducaoMin: tempoProducaoMin.trim() ? Number(tempoProducaoMin) || null : null,
+      recipe: entries.map((e) => ({
+        filamento: e.filamento,
+        gramas: Number(e.gramas.replace(",", ".")) || 0,
+      })),
+    };
+  }
+
   function handleSave() {
     startTransition(async () => {
       try {
-        await updateProductRecipe(
-          product.sku,
-          entries.map((e) => ({
-            filamento: e.filamento,
-            gramas: Number(e.gramas.replace(",", ".")) || 0,
-          })),
-        );
+        await updateProduct(product.sku, buildInput());
         toast.success(`Ficha técnica de ${product.sku} salva.`);
         setDirty(false);
       } catch (error) {
         toast.error("Falha ao salvar", {
+          description: error instanceof Error ? error.message : String(error),
+        });
+      }
+    });
+  }
+
+  function handleApplyToGroup() {
+    startApplyToGroup(async () => {
+      try {
+        await applyProductToGroup([product.sku, ...groupSkus], buildInput());
+        toast.success(`Custo, tempo e filamentos aplicados às ${groupSkus.length + 1} variações do grupo.`);
+        setDirty(false);
+      } catch (error) {
+        toast.error("Falha ao aplicar ao grupo", {
           description: error instanceof Error ? error.message : String(error),
         });
       }
@@ -116,15 +149,53 @@ export function FichaTecnicaRow({ product }: { product: FichaTecnicaProduct }) {
           </Button>
         </div>
       </TableCell>
-      <TableCell className="align-top">{formatCurrencyBRL(product.custoUnitario)}</TableCell>
-      <TableCell className="text-muted-foreground align-top">
-        {product.tempoProducaoMin ? `${product.tempoProducaoMin} min` : "—"}
+      <TableCell className="align-top">
+        <Input
+          value={custoUnitario}
+          onChange={(e) => {
+            setCustoUnitario(e.target.value);
+            setDirty(true);
+          }}
+          type="number"
+          step="0.01"
+          className="h-8 w-24 text-sm"
+        />
       </TableCell>
       <TableCell className="align-top">
+        <div className="flex items-center gap-1.5">
+          <Input
+            value={tempoProducaoMin}
+            onChange={(e) => {
+              setTempoProducaoMin(e.target.value);
+              setDirty(true);
+            }}
+            type="number"
+            step="1"
+            placeholder="min"
+            className="h-8 w-20 text-sm"
+          />
+          <span className="text-muted-foreground text-xs">min</span>
+        </div>
+      </TableCell>
+      <TableCell className="max-w-[160px] align-top whitespace-normal">
         {dirty && (
-          <Button size="sm" disabled={isPending} onClick={handleSave}>
-            {isPending ? "Salvando..." : "Salvar"}
-          </Button>
+          <div className="flex flex-col items-start gap-1.5">
+            <Button size="sm" disabled={isPending} onClick={handleSave}>
+              {isPending ? "Salvando..." : "Salvar"}
+            </Button>
+            {groupSkus.length > 0 && (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="text-muted-foreground h-auto w-36 justify-start p-0 text-left text-xs font-normal whitespace-normal underline-offset-2 hover:underline"
+                disabled={isApplyingToGroup}
+                onClick={handleApplyToGroup}
+              >
+                {isApplyingToGroup ? "Aplicando..." : `Aplicar às ${groupSkus.length} outras variações do grupo`}
+              </Button>
+            )}
+          </div>
         )}
       </TableCell>
     </TableRow>

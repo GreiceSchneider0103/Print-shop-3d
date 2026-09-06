@@ -7,7 +7,6 @@ export const SHEET_TABS = {
   orders: process.env.SHEET_TAB_ORDERS || "Vendas",
   products: process.env.SHEET_TAB_PRODUCTS || "CMV",
   channelFees: process.env.SHEET_TAB_FEES || "Taxas",
-  fixedCosts: process.env.SHEET_TAB_FIXED_COSTS || "Fixos",
   operationConfig: process.env.SHEET_TAB_OPERATION_CONFIG || "Config Operação",
   deadlines: process.env.SHEET_TAB_DEADLINES || "Prazos",
   production: process.env.SHEET_TAB_PRODUCTION || "Produção (2)",

@@ -5,7 +5,6 @@ import { SHEET_TABS } from "./config";
 import { prefetchTabs } from "./sheets-client";
 import { syncChannelFees } from "./sync-channel-fees";
 import { syncDeadlines } from "./sync-deadlines";
-import { syncFixedCosts } from "./sync-fixed-costs";
 import { syncOperationConfig } from "./sync-operation-config";
 import { syncOrders } from "./sync-orders";
 import { syncProduction } from "./sync-production";
@@ -21,16 +20,15 @@ type SyncStep = {
 // Ordem importa: orders pode ser independente. As demais são tabelas de
 // configuração simples.
 //
-// Ficha Técnica (product_recipe) saiu do pipeline: a partir de agora o
-// cadastro de filamento por SKU é mantido só pela edição em linha da
-// página /ficha-tecnica — sincronizar de novo sobrescreveria o que for
-// editado manualmente no app.
+// Ficha Técnica (product_recipe) e Custos Fixos saíram do pipeline: os
+// dois já têm CRUD manual completo no app (/ficha-tecnica e
+// /configuracoes → Custos Fixos) e sincronizar de novo sobrescreveria o
+// que for editado manualmente.
 const STEPS: SyncStep[] = [
   { tab: SHEET_TABS.products, run: syncProducts },
   { tab: SHEET_TABS.orders, run: syncOrders },
   { tab: SHEET_TABS.production, run: syncProduction },
   { tab: SHEET_TABS.channelFees, run: syncChannelFees },
-  { tab: SHEET_TABS.fixedCosts, run: syncFixedCosts },
   { tab: SHEET_TABS.operationConfig, run: syncOperationConfig },
   { tab: SHEET_TABS.deadlines, run: syncDeadlines },
 ];
