@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 
 import { mapWithConcurrency } from "./concurrency";
 import { SHEET_TABS } from "./config";
-import { buildRowLookup, normalizeHeader, parseDate, parseIntOrNull } from "./parsers";
+import { allFieldsEmpty, buildRowLookup, normalizeHeader, parseDate, parseIntOrNull } from "./parsers";
 import { readSheetTab } from "./sheets-client";
 
 const UPSERT_CONCURRENCY = 15;
@@ -63,6 +63,12 @@ export async function syncProduction() {
     const pedido = r.get("pedido");
     const sku = r.get("sku");
     const canal = r.get("canal");
+
+    // Linhas em branco na aba têm a coluna checkbox preenchida com "FALSE"
+    // (é assim que o Sheets renderiza uma checkbox vazia), então checar a
+    // linha inteira nunca bateria "vazia" — os 3 campos-chave é que
+    // realmente indicam se tem dado ali.
+    if (allFieldsEmpty(pedido, sku, canal)) continue;
 
     if (!pedido || !sku || !canal) {
       skipped += 1;

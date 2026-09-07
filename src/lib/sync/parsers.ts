@@ -4,6 +4,24 @@
  * dd/mm/aaaa e cabeçalhos com variação de acentuação/espaçamento.
  */
 
+/**
+ * Uma linha onde nenhum dos campos-chave (ex.: pedido/SKU/canal) tem valor
+ * é normal em planilhas grandes — sobra de formatação/buffer de linhas
+ * futuras, não um problema. Sem essa distinção, o contador de "ignorados"
+ * do sync mistura essas linhas em branco com linhas que têm dado real mas
+ * estão faltando só um campo obrigatório (aí sim vale a pena investigar),
+ * e o status "PARTIAL" parece um problema quando na prática é só a aba
+ * tendo mais linhas do que pedidos reais.
+ *
+ * Checa só os campos-chave passados, não a linha inteira: várias abas têm
+ * colunas de fórmula/checkbox que sempre têm algum valor (ex.: a coluna
+ * checkbox da aba Produção mostra "FALSE" mesmo numa linha totalmente sem
+ * dado), o que faria uma checagem "a linha inteira está vazia" nunca bater.
+ */
+export function allFieldsEmpty(...values: (string | undefined | null)[]): boolean {
+  return values.every((value) => !value || value.trim() === "");
+}
+
 export function normalizeHeader(header: string): string {
   return header
     .normalize("NFD")
