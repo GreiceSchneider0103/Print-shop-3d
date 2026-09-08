@@ -84,7 +84,7 @@ export default async function DashboardMensalPage() {
                 <TableHead>Mês</TableHead>
                 <TableHead className="text-right">Faturamento</TableHead>
                 <TableHead className="text-right">Margem</TableHead>
-                <TableHead className="text-right">Custos fixos</TableHead>
+                <TableHead className="text-right">Despesas</TableHead>
                 <TableHead className="text-right">Lucro líquido</TableHead>
               </TableRow>
             </TableHeader>

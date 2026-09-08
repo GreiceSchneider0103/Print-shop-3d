@@ -51,45 +51,6 @@ export async function deleteChannelFee(id: number) {
 }
 
 // ---------------------------------------------------------------------------
-// Custos fixos — total é sempre recalculado a partir dos componentes
-// (mesma regra da fórmula da planilha original).
-// ---------------------------------------------------------------------------
-export async function saveFixedCost(formData: FormData) {
-  const id = str(formData, "id");
-  const mesInput = str(formData, "mes"); // input type="month" -> "2026-09"
-  const [ano, mes] = mesInput.split("-").map(Number);
-
-  const ads = num(formData, "ads");
-  const tiny = num(formData, "tiny");
-  const mei = num(formData, "mei");
-  const outros = num(formData, "outros");
-  const parcela = num(formData, "parcela");
-
-  const data = {
-    mes: new Date(Date.UTC(ano, mes - 1, 1)),
-    ads,
-    tiny,
-    mei,
-    outros,
-    parcela,
-    total: ads + tiny + mei + outros + parcela,
-    reembolso: num(formData, "reembolso"),
-  };
-
-  if (id) {
-    await db.fixedCost.update({ where: { id: Number(id) }, data });
-  } else {
-    await db.fixedCost.create({ data });
-  }
-  revalidatePath("/configuracoes");
-}
-
-export async function deleteFixedCost(id: number) {
-  await db.fixedCost.delete({ where: { id } });
-  revalidatePath("/configuracoes");
-}
-
-// ---------------------------------------------------------------------------
 // Config Operação — guardado como histórico (mesma regra do sync): salvar
 // sempre cria uma nova linha vigente, nunca edita uma antiga.
 // custoEnergiaHora é derivado, nunca vem de input do usuário.

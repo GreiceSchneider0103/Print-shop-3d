@@ -8,6 +8,7 @@ import {
   Package,
   Settings,
   ShoppingCart,
+  Wallet,
   Wrench,
 } from "lucide-react";
 
@@ -44,6 +45,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { href: "/producao", label: "Produção", icon: Factory },
       { href: "/estoque", label: "Insumos / Estoque", icon: Boxes },
+      { href: "/despesas", label: "Despesas", icon: Wallet },
       { href: "/ficha-tecnica", label: "Ficha Técnica", icon: Wrench },
     ],
   },

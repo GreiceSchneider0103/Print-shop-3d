@@ -108,7 +108,7 @@ export default async function DashboardGeralPage({
               <span className="text-base font-semibold sm:text-lg">{formatCurrencyBRL(current.comissaoTotal)}</span>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-muted-foreground text-xs">Custos do período</span>
+              <span className="text-muted-foreground text-xs">Despesas do período</span>
               <span className="text-base font-semibold sm:text-lg">{formatCurrencyBRL(current.custosPeriodo)}</span>
             </div>
             <div className="flex flex-col gap-1">

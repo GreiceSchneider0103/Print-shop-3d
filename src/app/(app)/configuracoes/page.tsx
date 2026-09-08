@@ -5,15 +5,13 @@ import {
   SettingsIcon,
   SlidersHorizontalIcon,
   TargetIcon,
-  WalletIcon,
 } from "lucide-react";
 
-import { deleteChannelFee, deleteDeadline, deleteFixedCost } from "@/app/(app)/configuracoes/actions";
+import { deleteChannelFee, deleteDeadline } from "@/app/(app)/configuracoes/actions";
 import { ChannelBadge } from "@/components/channel-badge";
 import { AddChannelFeeButton, EditChannelFeeButton } from "@/components/configuracoes/channel-fee-form";
 import { AddDeadlineButton, EditDeadlineButton } from "@/components/configuracoes/deadline-form";
 import { DeleteRowButton } from "@/components/configuracoes/delete-row-button";
-import { AddFixedCostButton, EditFixedCostButton } from "@/components/configuracoes/fixed-cost-form";
 import { EditOperationConfigButton } from "@/components/configuracoes/operation-config-form";
 import { EditRevenueGoalButton } from "@/components/configuracoes/revenue-goal-form";
 import { EmptyState } from "@/components/empty-state";
@@ -24,7 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { db } from "@/lib/db";
-import { formatCurrencyBRL, formatDate, formatDateTime, formatMonth, formatPercent } from "@/lib/format";
+import { formatCurrencyBRL, formatDate, formatDateTime, formatPercent } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 // Server Action nesta página chama o sync completo (7 abas) — precisa de
@@ -32,9 +30,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export default async function ConfiguracoesPage() {
-  const [channelFees, fixedCosts, operationConfig, deadlines, syncLogs, revenueGoal] = await Promise.all([
+  const [channelFees, operationConfig, deadlines, syncLogs, revenueGoal] = await Promise.all([
     db.channelFee.findMany({ orderBy: [{ canal: "asc" }, { valorMin: "asc" }] }),
-    db.fixedCost.findMany({ orderBy: { mes: "desc" }, take: 12 }),
     db.operationConfig.findFirst({ orderBy: { atualizadoEm: "desc" } }),
     db.deadline.findMany({ orderBy: { canal: "asc" } }),
     db.syncLog.findMany({ orderBy: { startedAt: "desc" }, take: 20 }),
@@ -55,10 +52,6 @@ export default async function ConfiguracoesPage() {
           <TabsTrigger value="taxas">
             <PercentIcon />
             Taxas por canal
-          </TabsTrigger>
-          <TabsTrigger value="fixos">
-            <WalletIcon />
-            Custos fixos
           </TabsTrigger>
           <TabsTrigger value="operacao">
             <SlidersHorizontalIcon />
@@ -116,54 +109,6 @@ export default async function ConfiguracoesPage() {
                         <DeleteRowButton
                           action={deleteChannelFee.bind(null, fee.id)}
                           confirmMessage={`Excluir a faixa de ${fee.canal}?`}
-                        />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </TabsContent>
-
-        <TabsContent value="fixos" className="flex flex-col gap-4">
-          <div className="flex justify-end">
-            <AddFixedCostButton />
-          </div>
-          {fixedCosts.length === 0 ? (
-            <EmptyState icon={WalletIcon} message="Nenhum custo fixo cadastrado ainda." />
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Mês</TableHead>
-                  <TableHead className="text-right">Ads</TableHead>
-                  <TableHead className="text-right">Tiny</TableHead>
-                  <TableHead className="text-right">MEI</TableHead>
-                  <TableHead className="text-right">Parcela</TableHead>
-                  <TableHead className="text-right">Outros</TableHead>
-                  <TableHead className="text-right">Reembolso</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="w-20" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {fixedCosts.map((cost) => (
-                  <TableRow key={cost.id}>
-                    <TableCell className="capitalize">{formatMonth(cost.mes)}</TableCell>
-                    <TableCell className="text-right">{formatCurrencyBRL(cost.ads.toString())}</TableCell>
-                    <TableCell className="text-right">{formatCurrencyBRL(cost.tiny.toString())}</TableCell>
-                    <TableCell className="text-right">{formatCurrencyBRL(cost.mei.toString())}</TableCell>
-                    <TableCell className="text-right">{formatCurrencyBRL(cost.parcela.toString())}</TableCell>
-                    <TableCell className="text-right">{formatCurrencyBRL(cost.outros.toString())}</TableCell>
-                    <TableCell className="text-right">{formatCurrencyBRL(cost.reembolso.toString())}</TableCell>
-                    <TableCell className="text-right font-medium">{formatCurrencyBRL(cost.total.toString())}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-1">
-                        <EditFixedCostButton cost={cost} />
-                        <DeleteRowButton
-                          action={deleteFixedCost.bind(null, cost.id)}
-                          confirmMessage={`Excluir os custos fixos de ${formatDate(cost.mes)}?`}
                         />
                       </div>
                     </TableCell>

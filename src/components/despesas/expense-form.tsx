@@ -1,43 +1,42 @@
 import { PencilIcon, PlusIcon } from "lucide-react";
 import type { FixedCost } from "@prisma/client";
 
-import { saveFixedCost } from "@/app/(app)/configuracoes/actions";
+import { saveExpense } from "@/app/(app)/despesas/actions";
+import { FormDialog } from "@/components/configuracoes/form-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-import { FormDialog } from "./form-dialog";
 
 function toMonthInputValue(date: Date): string {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
-function Fields({ cost }: { cost?: FixedCost }) {
+function Fields({ expense }: { expense?: FixedCost }) {
   return (
     <>
-      {cost && <input type="hidden" name="id" defaultValue={cost.id} />}
+      {expense && <input type="hidden" name="id" defaultValue={expense.id} />}
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="mes">Mês</Label>
         <Input
           id="mes"
           name="mes"
           type="month"
-          defaultValue={cost ? toMonthInputValue(cost.mes) : toMonthInputValue(new Date())}
+          defaultValue={expense ? toMonthInputValue(expense.mes) : toMonthInputValue(new Date())}
           required
         />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="ads">Ads / impulsionamento</Label>
-          <Input id="ads" name="ads" type="number" step="0.01" defaultValue={cost ? Number(cost.ads) : 0} />
+          <Input id="ads" name="ads" type="number" step="0.01" defaultValue={expense ? Number(expense.ads) : 0} />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="tiny">Tiny</Label>
-          <Input id="tiny" name="tiny" type="number" step="0.01" defaultValue={cost ? Number(cost.tiny) : 0} />
+          <Input id="tiny" name="tiny" type="number" step="0.01" defaultValue={expense ? Number(expense.tiny) : 0} />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="mei">MEI</Label>
-          <Input id="mei" name="mei" type="number" step="0.01" defaultValue={cost ? Number(cost.mei) : 0} />
+          <Input id="mei" name="mei" type="number" step="0.01" defaultValue={expense ? Number(expense.mei) : 0} />
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="parcela">Parcela</Label>
@@ -46,17 +45,17 @@ function Fields({ cost }: { cost?: FixedCost }) {
             name="parcela"
             type="number"
             step="0.01"
-            defaultValue={cost ? Number(cost.parcela) : 0}
+            defaultValue={expense ? Number(expense.parcela) : 0}
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="outros">Outros custos</Label>
+          <Label htmlFor="outros">Outras despesas</Label>
           <Input
             id="outros"
             name="outros"
             type="number"
             step="0.01"
-            defaultValue={cost ? Number(cost.outros) : 0}
+            defaultValue={expense ? Number(expense.outros) : 0}
           />
         </div>
         <div className="flex flex-col gap-1.5">
@@ -66,7 +65,7 @@ function Fields({ cost }: { cost?: FixedCost }) {
             name="reembolso"
             type="number"
             step="0.01"
-            defaultValue={cost ? Number(cost.reembolso) : 0}
+            defaultValue={expense ? Number(expense.reembolso) : 0}
           />
         </div>
       </div>
@@ -77,7 +76,7 @@ function Fields({ cost }: { cost?: FixedCost }) {
   );
 }
 
-export function AddFixedCostButton() {
+export function AddExpenseButton() {
   return (
     <FormDialog
       trigger={
@@ -86,15 +85,15 @@ export function AddFixedCostButton() {
           Novo mês
         </Button>
       }
-      title="Novo custo fixo mensal"
-      action={saveFixedCost}
+      title="Nova despesa mensal"
+      action={saveExpense}
     >
       <Fields />
     </FormDialog>
   );
 }
 
-export function EditFixedCostButton({ cost }: { cost: FixedCost }) {
+export function EditExpenseButton({ expense }: { expense: FixedCost }) {
   return (
     <FormDialog
       trigger={
@@ -102,10 +101,10 @@ export function EditFixedCostButton({ cost }: { cost: FixedCost }) {
           <PencilIcon className="size-3.5" />
         </Button>
       }
-      title={`Editar custos — ${toMonthInputValue(cost.mes)}`}
-      action={saveFixedCost}
+      title={`Editar despesas — ${toMonthInputValue(expense.mes)}`}
+      action={saveExpense}
     >
-      <Fields cost={cost} />
+      <Fields expense={expense} />
     </FormDialog>
   );
 }
