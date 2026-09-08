@@ -11,10 +11,13 @@ export type MoveResult = { warnings: string[] };
 
 /**
  * Move um item da fila de produção pra outro status. Ao entrar em
- * PRODUZIDO pela primeira vez, baixa automaticamente o consumo de
+ * PRODUZIDO pela primeira vez, o usuário escolhe (via `descontarEstoque`,
+ * confirmado numa caixa de diálogo no Kanban) se quer baixar o consumo de
  * filamento da ficha técnica do SKU (match por nome, case-insensitive).
- * `estoqueBaixado` evita baixar duas vezes se o item for movido de volta
- * e pra PRODUZIDO de novo.
+ * `estoqueBaixado` só vira true quando a baixa é de fato aplicada — isso
+ * evita baixar duas vezes se o item for movido de volta e pra PRODUZIDO
+ * de novo, e permite que quem recusou a baixa da primeira vez ainda possa
+ * aceitar numa próxima passagem por PRODUZIDO.
  *
  * Ao chegar em POSTADO, marca a caixinha "produzido" na planilha (fora da
  * transação — é uma chamada de rede à API do Sheets, não deve travar o
@@ -22,14 +25,19 @@ export type MoveResult = { warnings: string[] };
  * como aviso: a marcação na planilha é best-effort e depende da service
  * account ter permissão de Editor lá (ver `mark-production-done.ts`).
  */
-export async function moveProductionItem(id: number, status: ProductionStatus): Promise<MoveResult> {
+export async function moveProductionItem(
+  id: number,
+  status: ProductionStatus,
+  options?: { descontarEstoque?: boolean },
+): Promise<MoveResult> {
   const warnings: string[] = [];
   let item: ProductionQueueItem | undefined;
+  const descontarEstoque = options?.descontarEstoque ?? true;
 
   await db.$transaction(async (tx) => {
     item = await tx.productionQueueItem.findUniqueOrThrow({ where: { id } });
 
-    if (status === "PRODUZIDO" && !item.estoqueBaixado) {
+    if (status === "PRODUZIDO" && !item.estoqueBaixado && descontarEstoque) {
       const recipe = await tx.productRecipe.findMany({ where: { sku: item.sku } });
       const inventoryItems = await tx.inventoryItem.findMany();
       const inventoryByKey = new Map(inventoryItems.map((inv) => [inv.insumo.trim().toLowerCase(), inv]));

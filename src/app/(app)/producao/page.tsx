@@ -30,6 +30,7 @@ export default async function ProducaoPage() {
     prazoPostagem: item.prazoPostagem,
     canal: item.canal,
     status: item.status,
+    estoqueBaixado: item.estoqueBaixado,
   }));
 
   return (
@@ -37,7 +38,7 @@ export default async function ProducaoPage() {
       <PageHeader
         icon={FactoryIcon}
         title="Produção"
-        description="Arraste os cards (ou use as setas) para mudar o status. Ao marcar como Produzido, o consumo de filamento é baixado automaticamente do estoque."
+        description="Arraste os cards (ou use as setas) para mudar o status. Ao marcar como Produzido, você escolhe se quer baixar o consumo de filamento do estoque."
       />
 
       {bySku.size > 0 && (

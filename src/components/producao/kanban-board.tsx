@@ -10,6 +10,14 @@ import { ChannelBadge } from "@/components/channel-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +31,7 @@ export type KanbanItem = {
   prazoPostagem: Date | null;
   canal: string;
   status: ProductionStatus;
+  estoqueBaixado: boolean;
 };
 
 const COLUMNS: { status: ProductionStatus; label: string; accent: string }[] = [
@@ -35,24 +44,26 @@ const COLUMNS: { status: ProductionStatus; label: string; accent: string }[] = [
 export function KanbanBoard({ items: initialItems }: { items: KanbanItem[] }) {
   const [items, setItems] = useState(initialItems);
   const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [pendingMove, setPendingMove] = useState<{ id: number; pedido: string } | null>(null);
   const [, startTransition] = useTransition();
   const now = new Date();
 
-  function moveItem(id: number, status: ProductionStatus) {
-    const current = items.find((i) => i.id === id);
-    if (!current || current.status === status) return;
-
+  function commitMove(id: number, status: ProductionStatus, options?: { descontarEstoque?: boolean }) {
     const previousItems = items;
     setItems((cur) => cur.map((i) => (i.id === id ? { ...i, status } : i)));
 
     startTransition(async () => {
       try {
-        const result = await moveProductionItem(id, status);
+        const result = await moveProductionItem(id, status, options);
         for (const warning of result.warnings) {
           toast.warning(warning);
         }
         if (status === "PRODUZIDO" && result.warnings.length === 0) {
-          toast.success("Produzido — consumo de filamento baixado do estoque.");
+          toast.success(
+            options?.descontarEstoque === false
+              ? "Produzido — estoque não foi alterado."
+              : "Produzido — consumo de filamento baixado do estoque.",
+          );
         }
       } catch (error) {
         setItems(previousItems);
@@ -61,6 +72,18 @@ export function KanbanBoard({ items: initialItems }: { items: KanbanItem[] }) {
         });
       }
     });
+  }
+
+  function moveItem(id: number, status: ProductionStatus) {
+    const current = items.find((i) => i.id === id);
+    if (!current || current.status === status) return;
+
+    if (status === "PRODUZIDO" && !current.estoqueBaixado) {
+      setPendingMove({ id, pedido: current.pedido });
+      return;
+    }
+
+    commitMove(id, status);
   }
 
   return (
@@ -149,6 +172,42 @@ export function KanbanBoard({ items: initialItems }: { items: KanbanItem[] }) {
           </Card>
         );
       })}
+
+      <Dialog open={pendingMove !== null} onOpenChange={(open) => !open && setPendingMove(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Baixar insumos do estoque?</DialogTitle>
+            <DialogDescription>
+              {pendingMove
+                ? `Marcar o pedido ${pendingMove.pedido} como Produzido — deseja descontar o consumo de filamento da ficha técnica desse SKU do seu estoque?`
+                : null}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                if (!pendingMove) return;
+                commitMove(pendingMove.id, "PRODUZIDO", { descontarEstoque: false });
+                setPendingMove(null);
+              }}
+            >
+              Não descontar
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                if (!pendingMove) return;
+                commitMove(pendingMove.id, "PRODUZIDO", { descontarEstoque: true });
+                setPendingMove(null);
+              }}
+            >
+              Descontar estoque
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
