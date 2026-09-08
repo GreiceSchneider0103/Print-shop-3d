@@ -1,4 +1,13 @@
-import { CalendarClockIcon, LayoutDashboardIcon, PackageIcon, ReceiptTextIcon, ShoppingCartIcon, WalletIcon } from "lucide-react";
+import Link from "next/link";
+import {
+  BoxesIcon,
+  CalendarClockIcon,
+  LayoutDashboardIcon,
+  PackageIcon,
+  ReceiptTextIcon,
+  ShoppingCartIcon,
+  WalletIcon,
+} from "lucide-react";
 
 import { ChannelBadge } from "@/components/channel-badge";
 import { PeriodFilter } from "@/components/dashboard/period-filter";
@@ -9,6 +18,7 @@ import { SyncNowButton } from "@/components/sync-now-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrencyBRL, formatPercent } from "@/lib/format";
+import { formatQuantity } from "@/lib/measure-unit";
 import {
   getDateRangeFromSearchParams,
   getPreviousRange,
@@ -18,7 +28,10 @@ import {
   toInputDate,
 } from "@/lib/period";
 import { getDashboardData } from "@/lib/queries/dashboard";
+import { getPurchaseNeeds } from "@/lib/queries/inventory";
 import { cn } from "@/lib/utils";
+
+const PURCHASE_NEEDS_PREVIEW = 5;
 
 export const dynamic = "force-dynamic";
 // O botão "Sincronizar agora" também vive aqui agora — mesma margem de
@@ -34,12 +47,14 @@ export default async function DashboardGeralPage({
   const range = getDateRangeFromSearchParams(params);
   const previousRange = getPreviousRange(range);
 
-  const [current, previous, hoje, ontem] = await Promise.all([
+  const [current, previous, hoje, ontem, { needs: purchaseNeeds }] = await Promise.all([
     getDashboardData(range),
     getDashboardData(previousRange),
     getDashboardData(getTodayRange()),
     getDashboardData(getYesterdayRange()),
+    getPurchaseNeeds(),
   ]);
+  const purchaseRows = purchaseNeeds.filter((n) => n.necessidadeCompraG > 0);
 
   const faturamentoGrowth = growthPct(current.faturamentoTotal, previous.faturamentoTotal);
   const margemGrowth = growthPct(current.margemTotal, previous.margemTotal);
@@ -47,7 +62,7 @@ export default async function DashboardGeralPage({
   const faturamentoDiaGrowth = growthPct(hoje.faturamentoTotal, ontem.faturamentoTotal);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-3 sm:gap-5">
       <PageHeader
         icon={LayoutDashboardIcon}
         title="Dashboard Geral"
@@ -60,7 +75,7 @@ export default async function DashboardGeralPage({
         }
       />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
         <StatCard
           icon={WalletIcon}
           label="Faturamento total"
@@ -129,7 +144,44 @@ export default async function DashboardGeralPage({
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              Necessidades de compra
+              {purchaseRows.length > 0 && (
+                <span className="text-muted-foreground text-xs font-normal">{purchaseRows.length} insumo(s)</span>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            {purchaseRows.length === 0 ? (
+              <EmptyState icon={BoxesIcon} message="Estoque em dia — nada pra comprar." />
+            ) : (
+              <>
+                {purchaseRows.slice(0, PURCHASE_NEEDS_PREVIEW).map((n) => (
+                  <div key={n.insumo} className="flex items-center justify-between gap-2 text-sm">
+                    <span className="truncate">{n.insumo}</span>
+                    <span className="flex shrink-0 items-center gap-2">
+                      <span className="text-destructive font-medium">
+                        {formatQuantity(n.necessidadeCompraG, n.unidadeMedida)}
+                      </span>
+                      <span className="text-muted-foreground text-xs">
+                        {formatCurrencyBRL(n.custoCompraEstimado)}
+                      </span>
+                    </span>
+                  </div>
+                ))}
+                <Link href="/estoque" className="text-primary mt-1 text-xs hover:underline">
+                  {purchaseRows.length > PURCHASE_NEEDS_PREVIEW
+                    ? `Ver todos os ${purchaseRows.length} na página de Estoque →`
+                    : "Ver na página de Estoque →"}
+                </Link>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Faturamento e margem por canal</CardTitle>

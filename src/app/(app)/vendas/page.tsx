@@ -42,7 +42,7 @@ export default async function VendasPage({
   const totalMargem = orders.reduce((acc, { margem }) => acc + margem, 0);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-3 sm:gap-5">
       <PageHeader
         icon={ShoppingCartIcon}
         title="Vendas / Pedidos"

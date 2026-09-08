@@ -57,7 +57,7 @@ export default async function FichaTecnicaPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-3 sm:gap-5">
       <PageHeader
         icon={WrenchIcon}
         title="Ficha Técnica"

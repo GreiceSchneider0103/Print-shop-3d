@@ -30,7 +30,7 @@ export default async function EstoquePage() {
   const unitByInsumo = new Map(items.map((item) => [item.insumo, item.unidadeMedida]));
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-3 sm:gap-5">
       <PageHeader
         icon={BoxesIcon}
         title="Insumos / Estoque"

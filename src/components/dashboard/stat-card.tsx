@@ -27,12 +27,12 @@ export function StatCard({
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between gap-2 pb-0">
-        <CardTitle className="text-xs">{label}</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between gap-2 px-3 pt-3 pb-0 sm:px-4 sm:pt-4">
+        <CardTitle className="truncate text-xs">{label}</CardTitle>
         <Icon className="text-muted-foreground size-3.5 shrink-0" />
       </CardHeader>
-      <CardContent className="pt-1.5">
-        <div className="text-xl font-semibold tracking-tight">{value}</div>
+      <CardContent className="px-3 pt-1.5 pb-3 sm:px-4 sm:pb-4">
+        <div className="truncate text-base font-semibold tracking-tight sm:text-xl">{value}</div>
         {hasGrowth && (
           <p
             className={cn(
@@ -40,11 +40,13 @@ export function StatCard({
               isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-destructive",
             )}
           >
-            {isPositive ? <TrendingUpIcon className="size-3.5" /> : <TrendingDownIcon className="size-3.5" />}
-            {formatPercent(growth)} vs. {growthLabel}
+            {isPositive ? <TrendingUpIcon className="size-3.5 shrink-0" /> : <TrendingDownIcon className="size-3.5 shrink-0" />}
+            <span className="truncate">
+              {formatPercent(growth)} vs. {growthLabel}
+            </span>
           </p>
         )}
-        {footer && <p className="text-muted-foreground mt-1 text-xs">{footer}</p>}
+        {footer && <p className="text-muted-foreground mt-1 truncate text-xs">{footer}</p>}
       </CardContent>
     </Card>
   );

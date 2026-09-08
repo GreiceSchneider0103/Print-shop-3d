@@ -15,7 +15,7 @@ export default async function DespesasPage() {
   const expenses = await db.fixedCost.findMany({ orderBy: { mes: "desc" }, take: 12 });
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-3 sm:gap-5">
       <PageHeader
         icon={WalletIcon}
         title="Despesas"

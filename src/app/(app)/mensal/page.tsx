@@ -21,7 +21,7 @@ export default async function DashboardMensalPage() {
   const metaMensal = revenueGoal ? Number(revenueGoal.metaMensal) : 0;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-3 sm:gap-5">
       <PageHeader
         icon={LineChartIcon}
         title="Dashboard Mensal"
