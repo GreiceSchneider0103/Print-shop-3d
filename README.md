@@ -65,7 +65,7 @@ Para gerenciar como migrations versionadas em vez de `db push`, use
 3. Preencha no `.env.local`: `GOOGLE_SHEETS_SPREADSHEET_ID`,
    `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`.
 4. Os nomes das abas assumidos por padrão estão em
-   `src/lib/sync/config.ts` (Vendas, Produção (2)) — ajuste ali ou via
+   `src/lib/sync/config.ts` (Vendas, Produção) — ajuste ali ou via
    variáveis de ambiente (`SHEET_TAB_*`) se os nomes reais da planilha
    forem diferentes. Só essas duas abas ainda sincronizam automaticamente
    — CMV, Taxas, Custos Fixos, Config Operação, Prazos e a Ficha Técnica

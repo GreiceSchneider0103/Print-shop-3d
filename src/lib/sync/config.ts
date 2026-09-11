@@ -11,7 +11,7 @@
  */
 export const SHEET_TABS = {
   orders: process.env.SHEET_TAB_ORDERS || "Vendas",
-  production: process.env.SHEET_TAB_PRODUCTION || "Produção (2)",
+  production: process.env.SHEET_TAB_PRODUCTION || "Produção",
 } as const;
 
 export function getSpreadsheetId(): string {
