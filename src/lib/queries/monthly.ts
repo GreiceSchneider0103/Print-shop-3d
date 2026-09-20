@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { computeOrderMargin } from "@/lib/finance";
+import { computeOrderMargin, isRevenueOrder } from "@/lib/finance";
 
 export type MonthlyPoint = {
   month: string; // YYYY-MM
@@ -26,10 +26,11 @@ export async function getMonthlySeries(): Promise<MonthlyPoint[]> {
   const months =
     (now.getUTCFullYear() - from.getUTCFullYear()) * 12 + (now.getUTCMonth() - from.getUTCMonth()) + 1;
 
-  const [orders, fixedCosts] = await Promise.all([
+  const [allOrders, fixedCosts] = await Promise.all([
     db.order.findMany({ where: { dataVenda: { gte: from } } }),
     db.fixedCost.findMany({ where: { mes: { gte: from } } }),
   ]);
+  const orders = allOrders.filter((o) => isRevenueOrder(o.situacao));
 
   const skus = Array.from(new Set(orders.map((o) => o.sku)));
   const products = skus.length ? await db.product.findMany({ where: { sku: { in: skus } } }) : [];
@@ -84,10 +85,11 @@ export async function getCurrentMonthProjection(): Promise<MonthProjection | nul
   const diasNoMes = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0)).getUTCDate();
   const diasDecorridos = now.getUTCDate();
 
-  const [orders, fixedCost] = await Promise.all([
+  const [allOrders, fixedCost] = await Promise.all([
     db.order.findMany({ where: { dataVenda: { gte: monthStart, lte: now } } }),
     db.fixedCost.findFirst({ where: { mes: monthStart } }),
   ]);
+  const orders = allOrders.filter((o) => isRevenueOrder(o.situacao));
 
   if (orders.length === 0) return null;
 

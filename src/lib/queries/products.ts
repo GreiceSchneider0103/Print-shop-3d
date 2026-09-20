@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { computeOrderMargin } from "@/lib/finance";
+import { computeOrderMargin, isRevenueOrder } from "@/lib/finance";
 import type { DateRange } from "@/lib/period";
 
 export type ProductAnalysis = {
@@ -18,9 +18,10 @@ export type ProductAnalysis = {
  * Sem `range`, considera o histórico completo.
  */
 export async function getProductAnalysis(range?: DateRange): Promise<ProductAnalysis[]> {
-  const orders = await db.order.findMany(
+  const allOrders = await db.order.findMany(
     range ? { where: { dataVenda: { gte: range.from, lte: range.to } } } : undefined,
   );
+  const orders = allOrders.filter((o) => isRevenueOrder(o.situacao));
   const products = await db.product.findMany();
   const productBySku = new Map(products.map((p) => [p.sku, p]));
 

@@ -7,6 +7,23 @@ export type OrderMargin = {
 };
 
 /**
+ * Situações que não representam venda de fato faturada — pedido cancelado
+ * ou ainda não pago — e por isso não devem entrar em faturamento/margem
+ * nos relatórios (Dashboard Geral, Dashboard Mensal, Análise por Produto).
+ * A lista de Vendas/Pedidos continua mostrando todos os pedidos (é uma
+ * tela de gestão, não de relatório) — o filtro é só nas consultas que
+ * somam dinheiro.
+ */
+const NON_REVENUE_SITUATIONS = new Set(
+  ["Cancelado", "Em aberto", "Dados incompletos"].map((s) => s.toLowerCase()),
+);
+
+/** Comparação case-insensitive — os nomes exatos vêm da planilha e podem variar de capitalização entre sincronizações. */
+export function isRevenueOrder(situacao: string): boolean {
+  return !NON_REVENUE_SITUATIONS.has(situacao.trim().toLowerCase());
+}
+
+/**
  * Faturamento − comissão − frete empresa − CMV (custo unitário do SKU ×
  * quantidade). Quando o SKU do pedido não está cadastrado em `products`
  * (SKU descontinuado/erro de digitação), o CMV é tratado como 0 e a

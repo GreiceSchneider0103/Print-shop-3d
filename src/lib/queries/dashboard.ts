@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { computeOrderMargin } from "@/lib/finance";
+import { computeOrderMargin, isRevenueOrder } from "@/lib/finance";
 import type { DateRange } from "@/lib/period";
 
 export type ChannelBreakdown = {
@@ -46,9 +46,12 @@ async function loadCustosPeriodo(range: DateRange): Promise<number> {
 }
 
 async function loadOrdersWithMargin(range: DateRange) {
-  const orders = await db.order.findMany({
+  const allOrders = await db.order.findMany({
     where: { dataVenda: { gte: range.from, lte: range.to } },
   });
+  // Cancelado/Em aberto/Dados incompletos não são venda faturada de fato —
+  // excluídos aqui pra não inflar faturamento e margem do relatório.
+  const orders = allOrders.filter((o) => isRevenueOrder(o.situacao));
 
   const skus = Array.from(new Set(orders.map((o) => o.sku)));
   const products = skus.length
